@@ -8,57 +8,43 @@ use Illuminate\Http\Request;
 
 class RendezVousController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $query = RendezVous::with('patiente', 'personnel');
-        if ($request->has('date'))         $query->whereDate('date_rv', $request->date);
-        if ($request->has('id_personnel')) $query->where('id_personnel', $request->id_personnel);
-        if ($request->has('statut'))       $query->where('statut', $request->statut);
-        return response()->json($query->orderBy('date_rv')->orderBy('heure_rv')->get());
+        return response()->json(RendezVous::with(['patiente', 'personnel'])->get());
     }
-
+ 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'date_rv'      => 'required|date',
-            'heure_rv'     => 'required|date_format:H:i',
-            'motif'        => 'nullable|string',
-            'statut'       => 'in:planifie,confirme,annule,effectue',
+        $validated = $request->validate([
             'id_patient'   => 'required|exists:patientes,id_patient',
             'id_personnel' => 'required|exists:personnel_medical,id_personnel',
+            'date_rv'      => 'required|date',
+            'heure_rv'     => 'required',
+            'motif'        => 'nullable|string',
+            'priorite'     => 'in:normale,urgente,critique',
+            'statut'       => 'in:planifie,confirme,annule,effectue',
         ]);
-        return response()->json(RendezVous::create($data), 201);
+ 
+        return response()->json(RendezVous::create($validated), 201);
     }
-
-    public function show(int $id)
+ 
+    public function show($id)
     {
-        return response()->json(RendezVous::with('patiente', 'personnel')->findOrFail($id));
+        return response()->json(RendezVous::with(['patiente', 'personnel'])->findOrFail($id));
     }
-
-    public function update(Request $request, int $id)
+ 
+    public function update(Request $request, $id)
     {
         $rv = RendezVous::findOrFail($id);
-        $rv->update($request->validate([
-            'date_rv'  => 'sometimes|date',
-            'heure_rv' => 'sometimes|date_format:H:i',
-            'motif'    => 'nullable|string',
-            'statut'   => 'in:planifie,confirme,annule,effectue',
-        ]));
+        $rv->update($request->only(['date_rv', 'heure_rv', 'motif', 'priorite', 'statut']));
         return response()->json($rv);
     }
-
-    public function destroy(int $id)
+ 
+    public function destroy($id)
     {
         RendezVous::findOrFail($id)->delete();
         return response()->json(['message' => 'Rendez-vous supprimé']);
     }
-
-    public function updateStatut(Request $request, int $id)
-    {
-        $rv = RendezVous::findOrFail($id);
-        $request->validate(['statut' => 'required|in:planifie,confirme,annule,effectue']);
-        $rv->update(['statut' => $request->statut]);
-        return response()->json($rv);
-    }
 }
+
 ?>

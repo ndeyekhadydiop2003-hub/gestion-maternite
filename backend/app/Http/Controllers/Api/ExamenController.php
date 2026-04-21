@@ -6,55 +6,42 @@ use App\Http\Controllers\Controller;
 use App\Models\Examen;
 use App\Models\ResultatExamen;
 use Illuminate\Http\Request;
-
 class ExamenController extends Controller
 {
     public function index()
     {
-        return response()->json(Examen::with('prescription', 'resultat')->latest()->paginate(15));
+        return response()->json(Examen::with(['patiente', 'personnel', 'resultats'])->get());
     }
-
+ 
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $validated = $request->validate([
+            'id_patient'      => 'required|exists:patientes,id_patient',
+            'id_personnel'    => 'required|exists:personnel_medical,id_personnel',
+            'id_consultation' => 'nullable|exists:consultations,id_consultation',
+            'type_examen'     => 'required|string',
             'date_examen'     => 'required|date',
-            'statut'          => 'in:prescrit,en_cours,realise,annule',
-            'id_prescription' => 'required|exists:prescriptions,id_prescription',
         ]);
-        return response()->json(Examen::create($data), 201);
+ 
+        return response()->json(Examen::create($validated), 201);
     }
-
-    public function show(int $id)
+ 
+    public function show($id)
     {
-        return response()->json(
-            Examen::with('prescription.consultation.patiente', 'resultat')->findOrFail($id)
-        );
+        return response()->json(Examen::with(['patiente', 'personnel', 'resultats'])->findOrFail($id));
     }
-
-    public function update(Request $request, int $id)
+ 
+    public function update(Request $request, $id)
     {
-        $e = Examen::findOrFail($id);
-        $e->update($request->validate(['statut' => 'in:prescrit,en_cours,realise,annule']));
-        return response()->json($e);
+        $examen = Examen::findOrFail($id);
+        $examen->update($request->only(['type_examen', 'date_examen']));
+        return response()->json($examen);
     }
-
-    public function destroy(int $id)
+ 
+    public function destroy($id)
     {
         Examen::findOrFail($id)->delete();
         return response()->json(['message' => 'Examen supprimé']);
-    }
-
-    public function ajouterResultat(Request $request, int $id)
-    {
-        $examen = Examen::findOrFail($id);
-        $data   = $request->validate([
-            'valeur'        => 'required|string',
-            'est_normal'    => 'required|boolean',
-            'date_resultat' => 'required|date',
-        ]);
-        $resultat = ResultatExamen::updateOrCreate(['id_examen' => $examen->id_examen], $data);
-        $examen->update(['statut' => 'realise']);
-        return response()->json($resultat, 201);
     }
 }
 ?>

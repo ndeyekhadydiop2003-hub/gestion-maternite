@@ -1,46 +1,76 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\Utilisateur;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-   public function login(Request $request)
-{
-    $request->validate([
-        'login' => 'required|string',
-        'mdp'   => 'required|string', // ← changer password en mdp
-    ]);
+    // ─────────────────────────────────────────
+    // POST /api/login
+    // ─────────────────────────────────────────
+    public function login(Request $request)
+    {
+        $request->validate([
+            'login'    => 'required|string',
+            'password' => 'required|string',
+        ]);
 
-    $user = User::where('login', $request->login)->first();
+        $utilisateur = Utilisateur::where('login', $request->login)->first();
 
-    if (!$user || !Hash::check($request->mdp, $user->mdp)) { // ← request->mdp
-        return response()->json(['message' => 'Identifiants incorrects'], 401);
+        if (!$utilisateur || !Hash::check($request->password, $utilisateur->password)) {
+            throw ValidationException::withMessages([
+                'login' => ['Identifiants incorrects.'],
+            ]);
+        }
+
+        // Supprime les anciens tokens (une seule session active)
+        $utilisateur->tokens()->delete();
+
+        $token = $utilisateur->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'token'       => $token,
+            'token_type'  => 'Bearer',
+            'utilisateur' => [
+                'id'         => $utilisateur->id_utilisateur,
+                'login'      => $utilisateur->login,
+                'role_acces' => $utilisateur->role_acces,
+                'personnel'  => $utilisateur->personnel,
+            ],
+        ]);
     }
 
-    $token = $user->createToken('api-token')->plainTextToken;
-
-    return response()->json([
-        'token' => $token,
-        'user'  => [
-            'id'         => $user->id_utilisateur,
-            'login'      => $user->login,
-            'role_acces' => $user->role_acces,
-        ],
-    ]);
-}
-
+    // ─────────────────────────────────────────
+    // POST /api/logout
+    // ─────────────────────────────────────────
     public function logout(Request $request)
     {
+        // Supprime uniquement le token actuel
         $request->user()->currentAccessToken()->delete();
-        return response()->json(['message' => 'Déconnecté avec succès']);
+
+        return response()->json([
+            'message' => 'Déconnecté avec succès.'
+        ]);
     }
 
+    // ─────────────────────────────────────────
+    // GET /api/me
+    // ─────────────────────────────────────────
     public function me(Request $request)
     {
-        return response()->json($request->user());
+        $utilisateur = $request->user()->load('personnel');
+
+        return response()->json([
+            'id'         => $utilisateur->id_utilisateur,
+            'login'      => $utilisateur->login,
+            'role_acces' => $utilisateur->role_acces,
+            'personnel'  => $utilisateur->personnel,
+        ]);
     }
 }

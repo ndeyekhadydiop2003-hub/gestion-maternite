@@ -10,52 +10,91 @@ class ConsultationController extends Controller
     public function index()
     {
         return response()->json(
-            Consultation::with('patiente', 'personnel', 'grossesse')->latest('date_consultation')->paginate(15)
+            Consultation::with(['patiente', 'personnel', 'grossesse'])->get()
         );
     }
-
+ 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'date_consultation' => 'required|date',
-            'poids'             => 'nullable|numeric|min:20|max:200',
-            'hauteur_uterine'   => 'nullable|numeric|min:0|max:50',
-            'temperature'       => 'nullable|numeric|min:35|max:42',
-            'tension'           => 'nullable|numeric|min:0',
-            'observation'       => 'nullable|string',
-            'id_patient'        => 'required|exists:patientes,id_patient',
-            'id_grossesse'      => 'nullable|exists:grossesses,id_grossesse',
-            'id_personnel'      => 'required|exists:personnel_medical,id_personnel',
+        $validated = $request->validate([
+            'id_patient'          => 'required|exists:patientes,id_patient',
+            'id_personnel'        => 'required|exists:personnel_medical,id_personnel',
+            'id_grossesse'        => 'nullable|exists:grossesses,id_grossesse',
+            'date_consultation'   => 'required|date',
+            'motif_consultation'  => 'nullable|string',
+            'poids'               => 'nullable|numeric',
+            'temperature'         => 'nullable|numeric',
+            'tension'             => 'nullable|string',
+            'observation'         => 'nullable|string',
+            'prochain_rdv'        => 'nullable|date',
         ]);
-        return response()->json(
-            Consultation::create($data)->load('patiente', 'personnel'), 201
-        );
+ 
+        $consultation = Consultation::create($validated);
+ 
+        // Créer automatiquement le détail selon le rôle du personnel
+        $role = auth()->user()->role_acces;
+        $this->creerDetailParRole($role, $consultation->id_consultation);
+ 
+        return response()->json($consultation, 201);
     }
-
-    public function show(int $id)
+ 
+    // Créer le détail selon le rôle connecté
+    private function creerDetailParRole(string $role, int $idConsultation): void
     {
-        return response()->json(
-            Consultation::with('patiente', 'personnel', 'grossesse', 'prescriptions.examens.resultat')->findOrFail($id)
-        );
+        match ($role) {
+            'sage_femme'   => ConsultationSageFemme::create(['id_consultation' => $idConsultation]),
+            'pediatre'     => ConsultationPediatrie::create(['id_consultation' => $idConsultation]),
+            'gynécologue'  => ConsultationGynecologie::create(['id_consultation' => $idConsultation]),
+            'psychologue'  => ConsultationPsychologie::create(['id_consultation' => $idConsultation]),
+            'anesthésiste' => ConsultationAnesthesie::create(['id_consultation' => $idConsultation]),
+            'infectiologue'=> ConsultationInfectiologie::create(['id_consultation' => $idConsultation]),
+            default        => null,
+        };
     }
-
-    public function update(Request $request, int $id)
+ 
+    public function show($id)
     {
-        $c = Consultation::findOrFail($id);
-        $c->update($request->validate([
-            'poids'           => 'nullable|numeric',
-            'hauteur_uterine' => 'nullable|numeric',
-            'temperature'     => 'nullable|numeric|min:35|max:42',
-            'tension'         => 'nullable|numeric',
-            'observation'     => 'nullable|string',
+        $role = auth()->user()->role_acces;
+ 
+        $consultation = Consultation::with([
+            'patiente', 'personnel', 'grossesse',
+            'prescriptions', 'examens.resultats',
+            'supervisions',
+        ])->findOrFail($id);
+ 
+        // Charger uniquement le détail du rôle connecté
+        $detail = match ($role) {
+            'sage_femme'    => $consultation->load('sageFemme'),
+            'pediatre'      => $consultation->load('pediatrie'),
+            'gynécologue'   => $consultation->load('gynecologie'),
+            'psychologue'   => $consultation->load('psychologie'),
+            'anesthésiste'  => $consultation->load('anesthesie'),
+            'infectiologue' => $consultation->load('infectiologie'),
+            'admin'         => $consultation->load(
+                'sageFemme', 'pediatrie', 'gynecologie',
+                'psychologie', 'anesthesie', 'planning', 'infectiologie'
+            ),
+            default => $consultation,
+        };
+ 
+        return response()->json($consultation);
+    }
+ 
+    public function update(Request $request, $id)
+    {
+        $consultation = Consultation::findOrFail($id);
+        $consultation->update($request->only([
+            'motif_consultation', 'poids', 'temperature',
+            'tension', 'observation', 'prochain_rdv',
         ]));
-        return response()->json($c);
+        return response()->json($consultation);
     }
-
-    public function destroy(int $id)
+ 
+    public function destroy($id)
     {
         Consultation::findOrFail($id)->delete();
         return response()->json(['message' => 'Consultation supprimée']);
     }
 }
+ 
 ?>

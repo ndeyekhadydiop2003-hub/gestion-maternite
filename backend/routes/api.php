@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PatienteController;
 use App\Http\Controllers\Api\PersonnelMedicalController;
@@ -19,136 +18,78 @@ use App\Http\Controllers\Api\SalleController;
 use App\Http\Controllers\Api\LitController;
 use App\Http\Controllers\Api\HospitalisationController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ConsultationSageFemmeController;
+use App\Http\Controllers\Api\ConsultationPediatrieController;
+use App\Http\Controllers\Api\ConsultationGynecologieController;
+use App\Http\Controllers\Api\ConsultationPsychologieController;
+use App\Http\Controllers\Api\ConsultationAnesthesieController;
+use App\Http\Controllers\Api\ConsultationPlanningController;
+use App\Http\Controllers\Api\ConsultationInfectiologieController;
+
 // ============================================================
 // ROUTES PUBLIQUES
 // ============================================================
-Route::post('/login', [AuthController::class, 'login']);
-
-// ── Stats publiques (sans authentification) ──────────────────
-Route::get('/stats/public', function () {
-    return response()->json([
-        'total_naissances' => \App\Models\NouveauNe::count(),
-        'satisfaction'     => 98,
-    ]);
-});
+Route::post('/login',    [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
 
 // ============================================================
-// ROUTES PROTÉGÉES — Sanctum
+// ROUTES PROTÉGÉES
 // ============================================================
 Route::middleware('auth:sanctum')->group(function () {
 
-    // ── Auth ─────────────────────────────────────────────────
+    // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me',      [AuthController::class, 'me']);
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 
-    // ── Patientes ────────────────────────────────────────────
-    Route::apiResource('patientes', PatienteController::class, [
-        'parameters' => ['patientes' => 'id']
-    ]);
-    Route::get('patientes/{id}/grossesses',       [PatienteController::class, 'grossesses']);
-    Route::get('patientes/{id}/consultations',    [PatienteController::class, 'consultations']);
-    Route::get('patientes/{id}/antecedents',      [PatienteController::class, 'antecedents']);
-    Route::get('patientes/{id}/hospitalisations', [PatienteController::class, 'hospitalisations']);
+    // ── Accessible à tous les connectés ──────────────────────
+    Route::apiResource('patientes',        PatienteController::class);
+    Route::apiResource('grossesses',       GrossesseController::class);
+    Route::apiResource('consultations',    ConsultationController::class);
+    Route::apiResource('accouchements',    AccouchementController::class);
+    Route::apiResource('nouveau-nes',      NouveauNeController::class);
+    Route::apiResource('prescriptions',    PrescriptionController::class);
+    Route::apiResource('examens',          ExamenController::class);
+    Route::apiResource('rendez-vous',      RendezVousController::class);
+    Route::apiResource('hospitalisations', HospitalisationController::class);
+    Route::apiResource('antecedents',      AntecedentMedicalController::class);
+    Route::apiResource('supervisions',     SupervisionController::class);
+    Route::apiResource('salles',           SalleController::class);
+    Route::apiResource('lits',             LitController::class);
+    Route::apiResource('resultats-examens', ResultatExamenController::class);
+    Route::get('examens/{examen}/resultats', [ResultatExamenController::class, 'parExamen']);
 
-    // ── Personnel Médical ─────────────────────────────────────
-    Route::apiResource('personnel-medical', PersonnelMedicalController::class, [
-        'parameters' => ['personnel-medical' => 'id']
-    ]);
+    // ── Admin seulement ───────────────────────────────────────
+    Route::middleware('role:admin')->group(function () {
+        Route::apiResource('personnel', PersonnelMedicalController::class);
+    });
 
-    // ── Rendez-vous ───────────────────────────────────────────
-    Route::apiResource('rendez-vous', RendezVousController::class, [
-        'parameters' => ['rendez-vous' => 'id']
-    ]);
-    Route::patch('rendez-vous/{id}/statut', [RendezVousController::class, 'updateStatut']);
+    // ── Par rôle ─────────────────────────────────────────────
+    Route::middleware('role:sage_femme,admin')->group(function () {
+        Route::apiResource('consultation-sage-femme', ConsultationSageFemmeController::class);
+    });
 
-    // ── Antécédents Médicaux ──────────────────────────────────
-    Route::apiResource('antecedents-medicaux', AntecedentMedicalController::class, [
-        'parameters' => ['antecedents-medicaux' => 'id']
-    ]);
+    Route::middleware('role:pediatre,admin')->group(function () {
+        Route::apiResource('consultation-pediatrie', ConsultationPediatrieController::class);
+    });
 
-    // ── Grossesses ────────────────────────────────────────────
-    Route::apiResource('grossesses', GrossesseController::class, [
-        'parameters' => ['grossesses' => 'id']
-    ]);
+    Route::middleware('role:gynecologue,admin')->group(function () {
+        Route::apiResource('consultation-gynecologie', ConsultationGynecologieController::class);
+    });
 
-    // ── Consultations ─────────────────────────────────────────
-    Route::apiResource('consultations', ConsultationController::class, [
-        'parameters' => ['consultations' => 'id']
-    ]);
+    Route::middleware('role:psychologue,admin')->group(function () {
+        Route::apiResource('consultation-psychologie', ConsultationPsychologieController::class);
+    });
 
-    // ── Prescriptions ─────────────────────────────────────────
-    Route::apiResource('prescriptions', PrescriptionController::class, [
-        'parameters' => ['prescriptions' => 'id']
-    ]);
+    Route::middleware('role:anesthesiste,admin')->group(function () {
+        Route::apiResource('consultation-anesthesie', ConsultationAnesthesieController::class);
+    });
 
-    // ── Examens ───────────────────────────────────────────────
-    Route::apiResource('examens', ExamenController::class, [
-        'parameters' => ['examens' => 'id']
-    ]);
-    Route::post('examens/{id}/resultat', [ExamenController::class, 'ajouterResultat']);
+    Route::middleware('role:sage_femme,gynecologue,admin')->group(function () {
+        Route::apiResource('consultation-planning', ConsultationPlanningController::class);
+    });
 
-    // ── Résultats d'examens ───────────────────────────────────
-    Route::apiResource('resultats-examens', ResultatExamenController::class, [
-        'parameters' => ['resultats-examens' => 'id'],
-        'only'       => ['index', 'show', 'update', 'destroy']
-    ]);
-
-    // ── Accouchements ─────────────────────────────────────────
-    Route::apiResource('accouchements', AccouchementController::class, [
-        'parameters' => ['accouchements' => 'id']
-    ]);
-
-    // ── Supervisions ──────────────────────────────────────────
-    Route::apiResource('supervisions', SupervisionController::class, [
-        'parameters' => ['supervisions' => 'id']
-    ]);
-
-    // ── Nouveau-nés ───────────────────────────────────────────
-    Route::apiResource('nouveau-nes', NouveauNeController::class, [
-        'parameters' => ['nouveau-nes' => 'id']
-    ]);
-
-    // ── Salles ────────────────────────────────────────────────
-    Route::apiResource('salles', SalleController::class, [
-        'parameters' => ['salles' => 'id']
-    ]);
-
-    // ── Lits ──────────────────────────────────────────────────
-    Route::get('lits/disponibles', [LitController::class, 'disponibles']);
-    Route::apiResource('lits', LitController::class, [
-        'parameters' => ['lits' => 'id']
-    ]);
-
-    // ── Hospitalisations ──────────────────────────────────────
-    Route::apiResource('hospitalisations', HospitalisationController::class, [
-        'parameters' => ['hospitalisations' => 'id']
-    ]);
-    Route::patch('hospitalisations/{id}/sortie', [HospitalisationController::class, 'sortie']);
-   // ── Dashboard ─────────────────────────────────────────────
-    Route::get('/dashboard/stats',        [DashboardController::class, 'stats']);
-    Route::get('/dashboard/activite-jour',[DashboardController::class, 'activiteJour']);
-
-    // PDF
-    Route::get('/pdf/liste-patientes',       [\App\Http\Controllers\Api\PdfController::class, 'listePatientes']);
-    Route::get('/pdf/fiche-admission',       [\App\Http\Controllers\Api\PdfController::class, 'ficheAdmission']);
-    Route::get('/pdf/planning-rdv',          [\App\Http\Controllers\Api\PdfController::class, 'planningRdv']);
-    Route::get('/pdf/bulletin-sortie',       [\App\Http\Controllers\Api\PdfController::class, 'bulletinSortie']);
-    Route::get('/pdf/occupation-lits',       [\App\Http\Controllers\Api\PdfController::class, 'occupationLits']);
-    Route::get('/pdf/rapport-transmissions', [\App\Http\Controllers\Api\PdfController::class, 'rapportTransmissions']);
-
-    Route::put('/me', function(\Illuminate\Http\Request $request) {
-    $user = $request->user();
-    $user->update(['login' => $request->login]);
-    return response()->json(['message' => 'Profil mis à jour']);
-});
-
-Route::put('/me/password', function(\Illuminate\Http\Request $request) {
-    $request->validate(['ancien_mdp' => 'required', 'nouveau_mdp' => 'required|min:6']);
-    $user = $request->user();
-    if (!\Hash::check($request->ancien_mdp, $user->mdp)) {
-        return response()->json(['message' => 'Ancien mot de passe incorrect'], 422);
-    }
-    $user->update(['mdp' => \Hash::make($request->nouveau_mdp)]);
-    return response()->json(['message' => 'Mot de passe modifié avec succès']);
-});
+    Route::middleware('role:infectiologue,admin')->group(function () {
+        Route::apiResource('consultation-infectiologie', ConsultationInfectiologieController::class);
+    });
 });

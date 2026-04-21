@@ -1,4 +1,5 @@
 <?php
+// ============================================================
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -9,38 +10,58 @@ class SalleController extends Controller
 {
     public function index()
     {
-        return response()->json(Salle::with('lits')->get());
+        return response()->json(
+            Salle::with('lits')->get()
+        );
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'type_chambre'   => 'required|string|max:100',
-            'numero_chambre' => 'required|string|unique:salles',
-            'batiment'       => 'nullable|string|max:100',
+            'nom'      => 'required|string|max:100',
+            'type'     => 'required|string|max:50',
+            'capacite' => 'required|integer|min:1',
         ]);
-        return response()->json(Salle::create($data), 201);
+
+        $salle = Salle::create($data);
+
+        return response()->json($salle, 201);
     }
 
-    public function show(int $id)
+    public function show(Salle $salle)
     {
-        return response()->json(Salle::with('lits')->findOrFail($id));
+        return response()->json(
+            $salle->load('lits.hospitalisations')
+        );
     }
 
-    public function update(Request $request, int $id)
+    public function update(Request $request, Salle $salle)
     {
-        $s = Salle::findOrFail($id);
-        $s->update($request->validate([
-            'type_chambre' => 'sometimes|string|max:100',
-            'batiment'     => 'nullable|string|max:100',
-        ]));
-        return response()->json($s);
+        $data = $request->validate([
+            'nom'      => 'sometimes|string|max:100',
+            'type'     => 'sometimes|string|max:50',
+            'capacite' => 'sometimes|integer|min:1',
+        ]);
+
+        $salle->update($data);
+
+        return response()->json($salle->load('lits'));
     }
 
-    public function destroy(int $id)
+    public function destroy(Salle $salle)
     {
-        Salle::findOrFail($id)->delete();
-        return response()->json(['message' => 'Salle supprimée']);
+        $litsOccupes = $salle->lits()
+            ->whereHas('hospitalisations', fn($q) => $q->whereNull('date_sortie'))
+            ->exists();
+
+        if ($litsOccupes) {
+            return response()->json([
+                'message' => 'Impossible de supprimer une salle avec des lits occupés.'
+            ], 422);
+        }
+
+        $salle->delete();
+        return response()->json(['message' => 'Salle supprimée.']);
     }
 }
 ?>

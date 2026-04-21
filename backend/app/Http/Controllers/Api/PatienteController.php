@@ -5,85 +5,86 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Patiente;
 use Illuminate\Http\Request;
-
 class PatienteController extends Controller
 {
-    public function index(Request $request)
+    // Liste toutes les patientes
+    public function index()
     {
-        $query = Patiente::query();
-        if ($request->has('search')) {
-            $s = $request->search;
-            $query->where(function ($q) use ($s) {
-                $q->where('nom', 'like', "%{$s}%")
-                  ->orWhere('telephone', 'like', "%{$s}%");
-            });
-        }
-        return response()->json($query->orderBy('nom')->paginate(15));
+        $patientes = Patiente::with('personnel')->orderBy('nom')->get();
+        return response()->json($patientes);
     }
-
+ 
+    // Créer une patiente
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'nom'            => 'required|string|max:150',
-            'date_naissance' => 'required|date|before:today',
-            'telephone'      => 'nullable|string|max:20',
-            'motif'          => 'nullable|string|max:255',
-            'groupe_sanguin' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+        $validated = $request->validate([
+            'nom'                    => 'required|string|max:100',
+            'prenom'                 => 'required|string|max:100',
+            'date_naissance'         => 'required|date',
+            'situation_matrimoniale' => 'required|in:celibataire,mariee,divorcee,veuve',
+            'telephone'              => 'nullable|string|max:20',
+            'adresse'                => 'nullable|string',
+            'groupe_sanguin'         => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            'motif'                  => 'nullable|string',
+            'statut'                 => 'in:active,inactive,archivee',
+            'notes_cliniques'        => 'nullable|string',
+            'id_personnel'           => 'nullable|exists:personnel_medical,id_personnel',
         ]);
-        return response()->json(Patiente::create($data), 201);
+ 
+        $patiente = Patiente::create($validated);
+        return response()->json($patiente, 201);
     }
-
-    public function show(int $id)
+ 
+    // Afficher une patiente avec tout son dossier
+    public function show($id)
     {
-        return response()->json(
-            Patiente::with(['antecedentsMedicaux', 'grossesses', 'rendezVous'])->findOrFail($id)
-        );
-    }
-
-    public function update(Request $request, int $id)
-    {
-        $patiente = Patiente::findOrFail($id);
-        $data = $request->validate([
-            'nom'            => 'sometimes|string|max:150',
-            'date_naissance' => 'sometimes|date|before:today',
-            'telephone'      => 'nullable|string|max:20',
-            'motif'          => 'nullable|string|max:255',
-            'groupe_sanguin' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
-        ]);
-        $patiente->update($data);
+        $patiente = Patiente::with([
+            'personnel',
+            'grossesses.accouchements.nouveauNes',
+            'consultations.sageFemme',
+            'consultations.pediatrie',
+            'consultations.gynecologie',
+            'consultations.psychologie',
+            'consultations.anesthesie',
+            'consultations.planning',
+            'consultations.infectiologie',
+            'antecedents',
+            'prescriptions',
+            'examens.resultats',
+            'rendezVous',
+            'hospitalisations.lit.salle',
+        ])->findOrFail($id);
+ 
         return response()->json($patiente);
     }
-
-    public function destroy(int $id)
+ 
+    // Modifier une patiente
+    public function update(Request $request, $id)
     {
-        Patiente::findOrFail($id)->delete();
+        $patiente  = Patiente::findOrFail($id);
+        $validated = $request->validate([
+            'nom'                    => 'string|max:100',
+            'prenom'                 => 'string|max:100',
+            'date_naissance'         => 'date',
+            'situation_matrimoniale' => 'in:celibataire,mariee,divorcee,veuve',
+            'telephone'              => 'nullable|string|max:20',
+            'adresse'                => 'nullable|string',
+            'groupe_sanguin'         => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            'motif'                  => 'nullable|string',
+            'statut'                 => 'in:active,inactive,archivee',
+            'notes_cliniques'        => 'nullable|string',
+        ]);
+ 
+        $patiente->update($validated);
+        return response()->json($patiente);
+    }
+ 
+    // Supprimer une patiente
+    public function destroy($id)
+    {
+        $patiente = Patiente::findOrFail($id);
+        $patiente->delete();
         return response()->json(['message' => 'Patiente supprimée']);
-    }
-
-    public function grossesses(int $id)
-    {
-        return response()->json(
-            Patiente::findOrFail($id)->grossesses()->with('accouchement')->get()
-        );
-    }
-
-    public function consultations(int $id)
-    {
-        return response()->json(
-            Patiente::findOrFail($id)->consultations()->with('personnel')->latest('date_consultation')->get()
-        );
-    }
-
-    public function antecedents(int $id)
-    {
-        return response()->json(Patiente::findOrFail($id)->antecedentsMedicaux);
-    }
-
-    public function hospitalisations(int $id)
-    {
-        return response()->json(
-            Patiente::findOrFail($id)->hospitalisations()->with('lit.salle')->get()
-        );
     }
 }
 ?>

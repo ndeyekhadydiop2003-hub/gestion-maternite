@@ -9,34 +9,47 @@ class SupervisionController extends Controller
 {
     public function index()
     {
-        return response()->json(Supervision::with('personnel', 'accouchement')->get());
+        return response()->json(
+            Supervision::with('consultation', 'personnel')->latest('date_supervision')->get()
+        );
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'date_supervision' => 'required|date',
-            'id_personnel'     => 'required|exists:personnel_medical,id_personnel',
-            'id_accouchement'  => 'required|exists:accouchements,id_accouchement',
+            'id_consultation' => 'required|exists:consultations,id_consultation',
+            'id_personnel'    => 'required|exists:personnel_medical,id_personnel',
+            'date_supervision'=> 'required|date',
+            'commentaire'     => 'nullable|string',
         ]);
-        return response()->json(Supervision::create($data), 201);
+
+        $supervision = Supervision::create($data);
+
+        return response()->json($supervision->load('consultation', 'personnel'), 201);
     }
 
-    public function show(int $id)
+    public function show(Supervision $supervision)
     {
-        return response()->json(Supervision::with('personnel', 'accouchement.grossesse.patiente')->findOrFail($id));
+        return response()->json($supervision->load('consultation', 'personnel'));
     }
 
-    public function update(Request $request, int $id)
+    public function update(Request $request, Supervision $supervision)
     {
-        $s = Supervision::findOrFail($id);
-        $s->update($request->validate(['date_supervision' => 'sometimes|date']));
-        return response()->json($s);
+        $data = $request->validate([
+            'id_consultation'  => 'sometimes|exists:consultations,id_consultation',
+            'id_personnel'     => 'sometimes|exists:personnel_medical,id_personnel',
+            'date_supervision' => 'sometimes|date',
+            'commentaire'      => 'nullable|string',
+        ]);
+
+        $supervision->update($data);
+
+        return response()->json($supervision->load('consultation', 'personnel'));
     }
 
-    public function destroy(int $id)
+    public function destroy(Supervision $supervision)
     {
-        Supervision::findOrFail($id)->delete();
-        return response()->json(['message' => 'Supervision supprimée']);
+        $supervision->delete();
+        return response()->json(['message' => 'Supervision supprimée.']);
     }
 }?>

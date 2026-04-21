@@ -1,5 +1,7 @@
 <?php
-
+// ============================================================
+// app/Http/Controllers/Api/LitController.php
+// ============================================================
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -10,39 +12,55 @@ class LitController extends Controller
 {
     public function index()
     {
-        return response()->json(Lit::with('salle')->get());
-    }
-
-    public function disponibles()
-    {
-        return response()->json(Lit::with('salle')->where('statut', 'libre')->get());
+        return response()->json(
+            Lit::with('salle')->get()
+        );
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'numero_lit' => 'required|string|unique:lits',
-            'statut'     => 'in:libre,occupe,maintenance',
-            'id_chambre' => 'required|exists:salles,id_chambre',
+            'id_salle' => 'required|exists:salles,id_salle',
+            'numero'   => 'required|string|max:20',
+            'type'     => 'required|string|max:50',
+            'statut'   => 'required|in:disponible,occupé,maintenance',
         ]);
-        return response()->json(Lit::create($data), 201);
+
+        $lit = Lit::create($data);
+
+        return response()->json($lit->load('salle'), 201);
     }
 
-    public function show(int $id)
+    public function show(Lit $lit)
     {
-        return response()->json(Lit::with('salle', 'hospitalisations.patiente')->findOrFail($id));
+        return response()->json($lit->load('salle', 'hospitalisations'));
     }
 
-    public function update(Request $request, int $id)
+    public function update(Request $request, Lit $lit)
     {
-        $lit = Lit::findOrFail($id);
-        $lit->update($request->validate(['statut' => 'in:libre,occupe,maintenance']));
-        return response()->json($lit);
+        $data = $request->validate([
+            'id_salle' => 'sometimes|exists:salles,id_salle',
+            'numero'   => 'sometimes|string|max:20',
+            'type'     => 'sometimes|string|max:50',
+            'statut'   => 'sometimes|in:disponible,occupé,maintenance',
+        ]);
+
+        $lit->update($data);
+
+        return response()->json($lit->load('salle'));
     }
 
-    public function destroy(int $id)
+    public function destroy(Lit $lit)
     {
-        Lit::findOrFail($id)->delete();
-        return response()->json(['message' => 'Lit supprimé']);
+        // Vérifie qu'aucune hospitalisation active
+        $actif = $lit->hospitalisations()->whereNull('date_sortie')->exists();
+        if ($actif) {
+            return response()->json([
+                'message' => 'Impossible de supprimer un lit avec une hospitalisation active.'
+            ], 422);
+        }
+
+        $lit->delete();
+        return response()->json(['message' => 'Lit supprimé.']);
     }
-}?>
+}
