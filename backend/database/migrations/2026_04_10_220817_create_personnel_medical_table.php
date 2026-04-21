@@ -8,15 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('personnel_medical', function (Blueprint $table) {
-            $table->bigIncrements('id_personnel');
-            $table->string('nom');
-            $table->string('prenom');
-            $table->string('telephone')->nullable();
-            $table->string('fonction');
-            $table->unsignedBigInteger('id_utilisateur')->nullable();
-            $table->timestamps();
-        });
+       Schema::create('personnel_medical', function (Blueprint $table) {
+    $table->id('id_personnel');
+    $table->foreignId('id_utilisateur')
+          ->constrained('utilisateurs', 'id_utilisateur')
+          ->onDelete('restrict'); // archiver avant suppression
+    $table->string('nom');
+    $table->string('prenom');
+    $table->string('telephone');
+    $table->string('fonction');
+    $table->timestamps();
+});
     }
 
     public function down(): void

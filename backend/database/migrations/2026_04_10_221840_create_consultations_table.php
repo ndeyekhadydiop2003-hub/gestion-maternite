@@ -12,21 +12,27 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('consultations', function (Blueprint $table) {
-            $table->id('id_consultation');
-            $table->date('date_consultation');
-            $table->decimal('poids', 5, 2)->nullable();
-            $table->decimal('hauteur_uterine', 5, 2)->nullable();
-            $table->decimal('temperature', 4, 1)->nullable();
-            $table->decimal('tension', 5, 2)->nullable();
-            $table->text('observation')->nullable();
-            $table->unsignedBigInteger('id_patient');
-            $table->unsignedBigInteger('id_grossesse')->nullable();
-            $table->unsignedBigInteger('id_personnel');
-            $table->foreign('id_patient')->references('id_patient')->on('patientes')->onDelete('cascade');
-            $table->foreign('id_grossesse')->references('id_grossesse')->on('grossesses')->onDelete('set null');
-            $table->foreign('id_personnel')->references('id_personnel')->on('personnel_medical')->onDelete('cascade');
-            $table->timestamps();
-        });
+    $table->id('id_consultation');
+    $table->foreignId('id_patient')
+          ->constrained('patientes', 'id_patient')
+          ->onDelete('cascade');
+    $table->foreignId('id_grossesse')
+          ->nullable()
+          ->constrained('grossesses', 'id_grossesse')
+          ->onDelete('set null');
+    $table->foreignId('id_personnel')
+          ->constrained('personnel_medical', 'id_personnel')
+          ->onDelete('restrict');
+    $table->date('date_consultation');
+    $table->string('motif_consultation')->nullable();
+    $table->decimal('poids', 5, 2)->nullable();
+    // ✅ CORRECTION : hauteur_uterine supprimée ici — déjà dans details_sage_femme (redondance évitée)
+    $table->decimal('temperature', 4, 1)->nullable();
+    $table->string('tension')->nullable(); // ex: "12/8"
+    $table->text('observation')->nullable();
+    $table->date('prochain_rdv')->nullable();
+    $table->timestamps();
+});
     }
 
     /**

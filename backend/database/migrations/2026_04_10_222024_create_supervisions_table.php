@@ -11,15 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-       Schema::create('supervisions', function (Blueprint $table) {
-            $table->id('id_supervision');
-            $table->date('date_supervision');
-            $table->unsignedBigInteger('id_personnel');
-            $table->unsignedBigInteger('id_accouchement');
-            $table->foreign('id_personnel')->references('id_personnel')->on('personnel_medical')->onDelete('cascade');
-            $table->foreign('id_accouchement')->references('id_accouchement')->on('accouchements')->onDelete('cascade');
-            $table->timestamps();
-        });
+      Schema::create('supervisions', function (Blueprint $table) {
+    $table->id('id_supervision');
+    $table->foreignId('id_consultation')
+          ->constrained('consultations', 'id_consultation')
+          ->onDelete('cascade');
+    $table->foreignId('id_personnel')
+          ->constrained('personnel_medical', 'id_personnel')
+          ->onDelete('restrict');
+    $table->date('date_supervision');
+    $table->text('commentaire')->nullable();
+    $table->timestamps();
+});
     }
 
     /**

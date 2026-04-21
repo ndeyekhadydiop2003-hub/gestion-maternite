@@ -11,15 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('lits', function (Blueprint $table) {
-            $table->id('id_lit');
-            $table->string('numero_lit')->unique();
-            $table->enum('statut', ['libre','occupe','maintenance'])->default('libre');
-            $table->boolean('est_occupe')->default(false);
-            $table->unsignedBigInteger('id_chambre');
-            $table->foreign('id_chambre')->references('id_chambre')->on('salles')->onDelete('cascade');
-            $table->timestamps();
-        });
+       Schema::create('lits', function (Blueprint $table) {
+    $table->id('id_lit');
+    $table->foreignId('id_salle')
+          ->constrained('salles', 'id_salle')
+          ->onDelete('cascade');
+    $table->string('numero');
+    $table->string('type'); // standard, réanimation, isolement...
+    $table->enum('statut', ['disponible', 'occupe', 'maintenance'])->default('disponible');
+    $table->timestamps();
+});
 
     }
 

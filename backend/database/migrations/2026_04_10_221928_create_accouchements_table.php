@@ -12,17 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('accouchements', function (Blueprint $table) {
-            $table->id('id_accouchement');
-            $table->date('date_accouchement');
-            $table->time('heure_accouchement')->nullable();
-            $table->enum('mode_accouchement', ['voie_basse','cesarienne','forceps','ventouse'])->default('voie_basse');
-            $table->text('a_accoucher')->nullable();
-            $table->unsignedBigInteger('id_grossesse');
-            $table->unsignedBigInteger('id_personnel');
-            $table->foreign('id_grossesse')->references('id_grossesse')->on('grossesses')->onDelete('cascade');
-            $table->foreign('id_personnel')->references('id_personnel')->on('personnel_medical')->onDelete('cascade');
-            $table->timestamps();
-        });
+    $table->id('id_accouchement');
+    $table->foreignId('id_grossesse')
+          ->constrained('grossesses', 'id_grossesse')
+          ->onDelete('cascade');
+    $table->foreignId('id_personnel')
+          ->nullable()
+          ->constrained('personnel_medical', 'id_personnel')
+          ->onDelete('set null');
+    $table->date('date_accouchement');
+    $table->enum('type_accouchement', ['voie_basse', 'cesarienne', 'forceps', 'ventouse']);
+    $table->integer('duree_travail')->nullable(); // en minutes
+    $table->string('complication')->nullable();
+    $table->enum('statut', ['en_cours', 'termine', 'complique'])->default('termine');
+    $table->timestamps();
+});
     }
 
     /**

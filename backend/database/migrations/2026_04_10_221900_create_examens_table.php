@@ -12,13 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('examens', function (Blueprint $table) {
-            $table->id('id_examen');
-            $table->date('date_examen');
-            $table->enum('statut', ['prescrit','en_cours','realise','annule'])->default('prescrit');
-            $table->unsignedBigInteger('id_prescription');
-            $table->foreign('id_prescription')->references('id_prescription')->on('prescriptions')->onDelete('cascade');
-            $table->timestamps();
-        });
+    $table->id('id_examen');
+    $table->foreignId('id_patient')
+          ->constrained('patientes', 'id_patient')
+          ->onDelete('cascade');
+    $table->foreignId('id_personnel')
+          ->constrained('personnel_medical', 'id_personnel')
+          ->onDelete('restrict');
+    $table->foreignId('id_consultation') // ✅ CORRECTION : lien vers la consultation d'origine
+          ->nullable()
+          ->constrained('consultations', 'id_consultation')
+          ->onDelete('set null');
+    $table->string('type_examen'); // echo, biologie, radio...
+    $table->date('date_examen');
+    $table->timestamps();
+});
     }
 
     /**

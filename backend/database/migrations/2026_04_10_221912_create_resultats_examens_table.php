@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-         Schema::create('resultats_examens', function (Blueprint $table) {
-            $table->id('id_resultat');
-            $table->text('valeur');
-            $table->boolean('est_normal')->default(true);
-            $table->date('date_resultat');
-            $table->unsignedBigInteger('id_examen');
-            $table->foreign('id_examen')->references('id_examen')->on('examens')->onDelete('cascade');
-            $table->timestamps();
-        });
+        Schema::create('resultats_examens', function (Blueprint $table) {
+    $table->id('id_resultat');
+    $table->foreignId('id_examen')
+          ->constrained('examens', 'id_examen')
+          ->onDelete('cascade');
+    $table->text('resultat'); // chiffrement recommandé (RGPD)
+    $table->date('date_resultat');
+    $table->timestamps();
+});
     }
 
     /**

@@ -10,17 +10,22 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {  Schema::create('grossesses', function (Blueprint $table) {
-            $table->id('id_grossesse');
-            $table->date('date_debut');
-            $table->date('date_terme_prevu')->nullable();
-            $table->integer('semaines_amenorrhee')->nullable();
-            $table->enum('statut', ['en_cours','terminee','interrompue'])->default('en_cours');
-            $table->enum('type_grossesse', ['simple','gemellaire','multiple'])->default('simple');
-            $table->unsignedBigInteger('id_patient');
-            $table->foreign('id_patient')->references('id_patient')->on('patientes')->onDelete('cascade');
-            $table->timestamps();
-        });;
+    { Schema::create('grossesses', function (Blueprint $table) {
+    $table->id('id_grossesse');
+    $table->foreignId('id_patient')
+          ->constrained('patientes', 'id_patient')
+          ->onDelete('cascade');
+    $table->date('date_debut');
+    $table->date('date_terme_prevu')->nullable();
+    $table->integer('semaines_amenorrhee')->nullable();
+    $table->integer('nombre_foetus')->default(1);
+    $table->enum('rhesus', ['positif', 'negatif'])->nullable();
+    $table->boolean('grossesse_a_risque')->default(false);
+    $table->enum('type_grossesse', ['simple', 'gemellaire', 'multiple'])->default('simple');
+    $table->enum('statut', ['en_cours', 'terminee', 'avortement', 'fausse_couche'])
+          ->default('en_cours');
+    $table->timestamps();
+});;
     }
 
     /**

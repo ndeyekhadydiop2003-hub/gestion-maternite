@@ -11,17 +11,23 @@ return new class extends Migration
      */
     public function up(): void
     {
-         Schema::create('nouveau_nes', function (Blueprint $table) {
-            $table->id('id_nouveau');
-            $table->enum('sexe', ['M','F','indetermine']);
-            $table->decimal('poids_naissance', 5, 2)->nullable();
-            $table->decimal('taille', 5, 2)->nullable();
-            $table->integer('score_apgar_1min')->nullable();
-            $table->integer('score_apgar_5min')->nullable();
-            $table->unsignedBigInteger('id_accouchement');
-            $table->foreign('id_accouchement')->references('id_accouchement')->on('accouchements')->onDelete('cascade');
-            $table->timestamps();
-        });
+       Schema::create('nouveau_nes', function (Blueprint $table) {
+    $table->id('id_nouveau_ne');
+    $table->foreignId('id_accouchement')
+          ->constrained('accouchements', 'id_accouchement')
+          ->onDelete('cascade');
+    $table->foreignId('id_patient')
+          ->nullable() // (0,1) → deviendra patient à part entière
+          ->constrained('patientes', 'id_patient')
+          ->onDelete('set null');
+    $table->enum('sexe', ['masculin', 'feminin', 'indetermine']);
+    $table->decimal('poids_naissance', 5, 2)->nullable(); // en kg
+    $table->decimal('taille', 5, 2)->nullable(); // en cm
+    $table->integer('apgar_1min')->nullable();  // score 0-10
+    $table->integer('apgar_5min')->nullable();  // score 0-10
+    $table->enum('etat_sante', ['bon', 'moyen', 'critique'])->default('bon');
+    $table->timestamps();
+});
     }
 
     /**

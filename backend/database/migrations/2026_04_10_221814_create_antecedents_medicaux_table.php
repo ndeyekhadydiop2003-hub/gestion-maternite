@@ -11,15 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-       Schema::create('antecedents_medicaux', function (Blueprint $table) {
-            $table->id('id_antecedent');
-            $table->string('categorie');
-            $table->text('description');
-            $table->enum('gravite', ['faible','modere','grave','critique'])->default('faible');
-            $table->unsignedBigInteger('id_patient');
-            $table->foreign('id_patient')->references('id_patient')->on('patientes')->onDelete('cascade');
-            $table->timestamps();
-        });
+      Schema::create('antecedents_medicaux', function (Blueprint $table) {
+    $table->id('id_antecedent');
+    $table->foreignId('id_patient')
+          ->constrained('patientes', 'id_patient')
+          ->onDelete('cascade');
+    $table->string('categorie'); // chirurgical, médical, obstétrical...
+    $table->text('description');
+    $table->enum('gravite', ['faible', 'modere', 'grave', 'critique']);
+    $table->timestamps();
+});
 
     }
 
