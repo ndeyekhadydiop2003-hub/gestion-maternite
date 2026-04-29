@@ -8,40 +8,82 @@ use Illuminate\Http\Request;
 
 class PrescriptionController extends Controller
 {
-    public function index()
+    /**
+     * GET /api/prescriptions
+     */
+    public function index(Request $request)
     {
-        return response()->json(Prescription::with('consultation', 'examens')->latest()->paginate(15));
+        $perPage = $request->get('per_page', 15);
+
+        $prescriptions = Prescription::with([
+                'patiente:id_patient,nom,prenom',
+                // On charge le personnel et son utilisateur lié (qui contient le nom/prénom)
+                'personnel.utilisateur',
+                'consultation:id_consultation,id_patient',
+            ])
+            ->orderBy('date_prescription', 'desc')
+            ->paginate($perPage);
+
+        return response()->json($prescriptions);
     }
 
+    /**
+     * POST /api/prescriptions
+     */
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $validated = $request->validate([
+            'medicaments'       => 'required|string',
+            'posologie'         => 'nullable|string',
             'date_prescription' => 'required|date',
-            'type_examen'       => 'nullable|string|max:255',
+            'date_fin'          => 'nullable|date|after_or_equal:date_prescription',
             'id_consultation'   => 'required|exists:consultations,id_consultation',
+            'id_patient'        => 'nullable|exists:patientes,id_patient',
+            'id_personnel'      => 'nullable|exists:personnel_medical,id_personnel',
         ]);
-        return response()->json(Prescription::create($data), 201);
+
+        $prescription = Prescription::create($validated);
+
+        return response()->json($prescription->load('patiente', 'personnel.utilisateur'), 201);
     }
 
-    public function show(int $id)
+    /**
+     * GET /api/prescriptions/{id}
+     */
+    public function show($id)
     {
-        return response()->json(Prescription::with('consultation.patiente', 'examens.resultat')->findOrFail($id));
+        $prescription = Prescription::with(['patiente', 'personnel.utilisateur', 'consultation'])
+            ->findOrFail($id);
+
+        return response()->json($prescription);
     }
 
-    public function update(Request $request, int $id)
+    /**
+     * PUT /api/prescriptions/{id}
+     */
+    public function update(Request $request, $id)
     {
-        $p = Prescription::findOrFail($id);
-        $p->update($request->validate([
+        $prescription = Prescription::findOrFail($id);
+
+        $validated = $request->validate([
+            'type'              => 'sometimes|in:traitement,vaccin',
+            'medicaments'       => 'sometimes|string',
+            'posologie'         => 'nullable|string',
             'date_prescription' => 'sometimes|date',
-            'type_examen'       => 'nullable|string|max:255',
-        ]));
-        return response()->json($p);
+            'date_fin'          => 'nullable|date',
+        ]);
+
+        $prescription->update($validated);
+
+        return response()->json($prescription);
     }
 
-    public function destroy(int $id)
+    /**
+     * DELETE /api/prescriptions/{id}
+     */
+    public function destroy($id)
     {
         Prescription::findOrFail($id)->delete();
-        return response()->json(['message' => 'Prescription supprimée']);
+        return response()->json(['message' => 'Supprimé avec succès.']);
     }
 }
-?>

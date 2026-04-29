@@ -4,19 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class RendezVous extends Model
+class PlanifierRv extends Model
 {
-    protected $table = 'rendez_vous';
-    protected $primaryKey = 'id_rendez_vous';
+    protected $table = 'planifier_rv';
+    protected $primaryKey = 'id';
 
     protected $fillable = [
         'id_patient',
         'id_personnel',
-        'id_planification',
-        'date_rv',
-        'heure_rv',
-        'motif',
+        'delai_recommande',
         'priorite',
+        'motif',
         'statut',
     ];
 
@@ -30,8 +28,8 @@ class RendezVous extends Model
         return $this->belongsTo(PersonnelMedical::class, 'id_personnel', 'id_personnel');
     }
 
-    public function planification()
+    public function rendezVous()
     {
-        return $this->belongsTo(PlanifierRv::class, 'id_planification', 'id');
+        return $this->hasOne(RendezVous::class, 'id_planification', 'id');
     }
 }

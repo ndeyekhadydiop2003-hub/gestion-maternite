@@ -24,11 +24,16 @@ class PatienteController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'nom'            => 'required|string|max:150',
-            'date_naissance' => 'required|date|before:today',
-            'telephone'      => 'nullable|string|max:20',
-            'motif'          => 'nullable|string|max:255',
-            'groupe_sanguin' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            'nom'                    => 'required|string|max:150',
+            'prenom'                 => 'required|string|max:150',
+            'date_naissance'         => 'required|date|before:today',
+            'situation_matrimoniale' => 'required|in:celibataire,mariee,divorcee,veuve',
+            'telephone'              => 'nullable|string|max:20',
+            'adresse'                => 'nullable|string',
+            'groupe_sanguin'         => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            'motif'                  => 'nullable|string|max:255',
+            'statut'                 => 'nullable|in:active,inactive,archivee',
+            'id_personnel'           => 'nullable|exists:personnel_medical,id_personnel',
         ]);
         return response()->json(Patiente::create($data), 201);
     }

@@ -113,4 +113,162 @@ class PdfController extends Controller
         $html .= '<div class="footer">Maternité — Document confidentiel</div>';
         return Pdf::loadHTML($html)->setPaper('a4')->download('rapport-transmissions.pdf');
     }
+
+    public function dossierBebe($id)
+{
+    $bebe = DB::table('nouveau_nes')
+        ->where('id_nouveau_ne', $id)
+        ->first();
+
+    if (!$bebe) {
+        return response()->json(['message' => 'Bébé introuvable'], 404);
+    }
+
+    $accouchement = DB::table('accouchements')
+        ->where('id_accouchement', $bebe->id_accouchement)
+        ->first();
+
+    $grossesse = $accouchement
+        ? DB::table('grossesses')->where('id_grossesse', $accouchement->id_grossesse)->first()
+        : null;
+
+    $patiente = $grossesse
+        ? DB::table('patientes')->where('id_patient', $grossesse->id_patient)->first()
+        : null;
+
+    $consultations = $patiente
+        ? DB::table('consultations')
+            ->where('id_patient', $patiente->id_patient)
+            ->orderBy('date_consultation', 'desc')
+            ->limit(5)
+            ->get()
+        : [];
+
+    $prescriptions = $patiente
+        ? DB::table('prescriptions')
+            ->where('id_patient', $patiente->id_patient)
+            ->orderBy('date_prescription', 'desc')
+            ->limit(5)
+            ->get()
+        : [];
+
+    $soins = DB::table('soins')
+        ->where('id_nouveau_ne', $id)
+        ->orderBy('date_soin', 'desc')
+        ->limit(5)
+        ->get();
+
+    $vaccins = DB::table('vaccins')
+        ->where('id_nouveau_ne', $id)
+        ->get();
+
+    $nomBebe = $patiente
+        ? 'Bébé de ' . $patiente->prenom . ' ' . $patiente->nom
+        : 'Nouveau-né #' . $id;
+
+    $html = $this->style();
+
+    // ── En-tête ──
+    $html .= '<h1>Dossier Médical — ' . $nomBebe . '</h1>';
+    $html .= '<p>Maternité · Généré le ' . now()->format('d/m/Y à H:i') . '</p>';
+
+    // ── Infos bébé ──
+    $html .= '<h2 style="color:#c2185b;margin-top:16px">👶 Informations du nouveau-né</h2>';
+    $html .= '<table><tr><th>ID</th><th>Poids naissance</th><th>Taille</th><th>Sexe</th><th>Apgar 1min</th><th>Apgar 5min</th></tr>';
+    $html .= '<tr>';
+    $html .= '<td>NB' . str_pad($id, 4, '0', STR_PAD_LEFT) . '</td>';
+    $html .= '<td>' . ($bebe->poids_naissance ? $bebe->poids_naissance . ' kg' : '—') . '</td>';
+    $html .= '<td>' . ($bebe->taille ? $bebe->taille . ' cm' : '—') . '</td>';
+    $html .= '<td>' . ($bebe->sexe ?? '—') . '</td>';
+    $html .= '<td>' . ($bebe->apgar_1min ?? '—') . '/10</td>';
+    $html .= '<td>' . ($bebe->apgar_5min ?? '—') . '/10</td>';
+    $html .= '</tr></table>';
+
+    // ── Infos mère ──
+    $html .= '<h2 style="color:#c2185b;margin-top:16px">👩 Mère & accouchement</h2>';
+    $html .= '<table><tr><th>Mère</th><th>Type accouchement</th><th>Date accouchement</th><th>Complications</th></tr>';
+    $html .= '<tr>';
+    $html .= '<td>' . ($patiente ? $patiente->prenom . ' ' . $patiente->nom : '—') . '</td>';
+    $html .= '<td>' . ($accouchement->type_accouchement ?? '—') . '</td>';
+    $html .= '<td>' . ($accouchement->date_accouchement ?? '—') . '</td>';
+    $html .= '<td>' . ($accouchement->complication ?? 'Aucune') . '</td>';
+    $html .= '</tr></table>';
+
+    // ── Consultations ──
+    $html .= '<h2 style="color:#c2185b;margin-top:16px">🩺 Dernières consultations</h2>';
+    $html .= '<table><tr><th>Date</th><th>Motif</th><th>Poids</th><th>Température</th><th>Observation</th></tr>';
+    if (count($consultations) === 0) {
+        $html .= '<tr><td colspan="5" style="text-align:center">Aucune consultation</td></tr>';
+    } else {
+        foreach ($consultations as $c) {
+            $html .= '<tr>';
+            $html .= '<td>' . ($c->date_consultation ?? '—') . '</td>';
+            $html .= '<td>' . ($c->motif_consultation ?? '—') . '</td>';
+            $html .= '<td>' . ($c->poids ? $c->poids . ' kg' : '—') . '</td>';
+            $html .= '<td>' . ($c->temperature ? $c->temperature . '°C' : '—') . '</td>';
+            $html .= '<td>' . ($c->observation ?? '—') . '</td>';
+            $html .= '</tr>';
+        }
+    }
+    $html .= '</table>';
+
+    // ── Prescriptions ──
+    $html .= '<h2 style="color:#c2185b;margin-top:16px">💊 Prescriptions actives</h2>';
+    $html .= '<table><tr><th>Date</th><th>Médicaments</th><th>Posologie</th><th>Date fin</th></tr>';
+    if (count($prescriptions) === 0) {
+        $html .= '<tr><td colspan="4" style="text-align:center">Aucune prescription</td></tr>';
+    } else {
+        foreach ($prescriptions as $p) {
+            $html .= '<tr>';
+            $html .= '<td>' . ($p->date_prescription ?? '—') . '</td>';
+            $html .= '<td>' . ($p->medicaments ?? '—') . '</td>';
+            $html .= '<td>' . ($p->posologie ?? '—') . '</td>';
+            $html .= '<td>' . ($p->date_fin ?? '—') . '</td>';
+            $html .= '</tr>';
+        }
+    }
+    $html .= '</table>';
+
+    // ── Soins planifiés ──
+    $html .= '<h2 style="color:#c2185b;margin-top:16px">🩹 Soins planifiés</h2>';
+    $html .= '<table><tr><th>Type</th><th>Date</th><th>Heure</th><th>Fréquence</th><th>Statut</th><th>Note</th></tr>';
+    if (count($soins) === 0) {
+        $html .= '<tr><td colspan="6" style="text-align:center">Aucun soin planifié</td></tr>';
+    } else {
+        foreach ($soins as $s) {
+            $html .= '<tr>';
+            $html .= '<td>' . ($s->type_soin ?? '—') . '</td>';
+            $html .= '<td>' . ($s->date_soin ?? '—') . '</td>';
+            $html .= '<td>' . ($s->heure_soin ?? '—') . '</td>';
+            $html .= '<td>' . ($s->frequence ?? '—') . '</td>';
+            $html .= '<td>' . ($s->statut ?? '—') . '</td>';
+            $html .= '<td>' . ($s->note ?? '—') . '</td>';
+            $html .= '</tr>';
+        }
+    }
+    $html .= '</table>';
+
+    // ── Vaccins ──
+    $html .= '<h2 style="color:#c2185b;margin-top:16px">💉 Vaccins</h2>';
+    $html .= '<table><tr><th>Vaccin</th><th>Date administration</th><th>Statut</th><th>Lot</th><th>Observations</th></tr>';
+    if (count($vaccins) === 0) {
+        $html .= '<tr><td colspan="5" style="text-align:center">Aucun vaccin enregistré</td></tr>';
+    } else {
+        foreach ($vaccins as $v) {
+            $html .= '<tr>';
+            $html .= '<td>' . ($v->nom_vaccin ?? '—') . '</td>';
+            $html .= '<td>' . ($v->date_administration ?? '—') . '</td>';
+            $html .= '<td>' . ($v->statut ?? '—') . '</td>';
+            $html .= '<td>' . ($v->lot ?? '—') . '</td>';
+            $html .= '<td>' . ($v->observations ?? '—') . '</td>';
+            $html .= '</tr>';
+        }
+    }
+    $html .= '</table>';
+
+    $html .= '<div class="footer">Maternité — Document confidentiel — ' . $nomBebe . '</div>';
+
+    return Pdf::loadHTML($html)->setPaper('a4')->download('dossier-' . $id . '.pdf');
+}
+
 }

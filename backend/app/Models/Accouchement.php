@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 class Accouchement extends Model {
     protected $table      = 'accouchements';
     protected $primaryKey = 'id_accouchement';
-    protected $fillable   = ['date_accouchement','heure_accouchement','mode_accouchement','a_accoucher','id_grossesse','id_personnel'];
+    protected $fillable   = ['date_accouchement','heure_accouchement','type_accouchement','a_accoucher','id_grossesse','id_personnel'];
 
     public function grossesse() {
         return $this->belongsTo(Grossesse::class, 'id_grossesse', 'id_grossesse');

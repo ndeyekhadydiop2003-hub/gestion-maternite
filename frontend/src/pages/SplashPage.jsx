@@ -65,7 +65,7 @@ export default function SplashPage() {
               marginBottom: '3rem',
               fontWeight: 300
             }}>
-              Une plateforme d'excellence pour la gestion des services de maternité. 
+              Une plateforme d&apos;excellence pour la gestion des services de maternité. 
               Suivi des patientes, naissances et soins avec une technologie fluide et humaine.
             </p>
             <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
@@ -86,7 +86,7 @@ export default function SplashPage() {
                 onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.background = '#ad1457'; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.background = '#c2185b'; }}
               >
-                Accéder à l'application
+                Accéder à l,&apos,application
               </button>
             </div>
           </div>

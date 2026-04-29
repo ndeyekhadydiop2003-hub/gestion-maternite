@@ -19,12 +19,18 @@ use App\Http\Controllers\Api\SalleController;
 use App\Http\Controllers\Api\LitController;
 use App\Http\Controllers\Api\HospitalisationController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Models\Notification;
+use App\Http\Controllers\Api\VaccinController;
+use App\Http\Controllers\Api\PlanifierRvController;
+use App\Http\Controllers\Api\ConsultationPediatreController;
+use App\Http\Controllers\Api\SoinController;
+use App\Http\Controllers\Api\SageFemmeDashboardController;
+
 // ============================================================
 // ROUTES PUBLIQUES
 // ============================================================
 Route::post('/login', [AuthController::class, 'login']);
 
-// ── Stats publiques (sans authentification) ──────────────────
 Route::get('/stats/public', function () {
     return response()->json([
         'total_naissances' => \App\Models\NouveauNe::count(),
@@ -40,6 +46,63 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Auth ─────────────────────────────────────────────────
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me',      [AuthController::class, 'me']);
+
+    Route::put('/me', function(\Illuminate\Http\Request $request) {
+        $user = $request->user();
+        $user->update(['login' => $request->login]);
+        return response()->json(['message' => 'Profil mis à jour']);
+    });
+
+    Route::put('/me/password', function(\Illuminate\Http\Request $request) {
+        $request->validate(['ancien_mdp' => 'required', 'nouveau_mdp' => 'required|min:6']);
+        $user = $request->user();
+        if (!\Hash::check($request->ancien_mdp, $user->mdp)) {
+            return response()->json(['message' => 'Ancien mot de passe incorrect'], 422);
+        }
+        $user->update(['mdp' => \Hash::make($request->nouveau_mdp)]);
+        return response()->json(['message' => 'Mot de passe modifié avec succès']);
+    });
+
+    // ── Dashboard Sage-femme ──────────────────────────────────
+    Route::prefix('sage-femme/dashboard')->group(function () {
+        Route::get('/stats',           [SageFemmeDashboardController::class, 'stats']);
+        Route::get('/urgences',        [SageFemmeDashboardController::class, 'urgences']);
+        Route::get('/prochain-rdv',    [SageFemmeDashboardController::class, 'prochainRdv']);
+        Route::get('/grossesse-rapide',[SageFemmeDashboardController::class, 'grossesseRapide']);
+    });
+
+    // ── Planifications RV ─────────────────────────────────────
+    Route::apiResource('planifier-rv', PlanifierRvController::class, [
+        'parameters' => ['planifier-rv' => 'id']
+    ]);
+    Route::patch('planifier-rv/{id}/confirmer', [PlanifierRvController::class, 'confirmer']);
+
+    // ── Vaccins ───────────────────────────────────────────────
+    Route::apiResource('vaccins', VaccinController::class, [
+        'parameters' => ['vaccins' => 'id']
+    ]);
+    Route::get('nouveau-nes/{id}/vaccins', [VaccinController::class, 'parBebe']);
+
+    // ── Notifications ─────────────────────────────────────────
+    Route::get('/notifications', function (\Illuminate\Http\Request $request) {
+        $notifications = Notification::where('id_destinataire', $request->user()->id_utilisateur)
+            ->orderByDesc('created_at')
+            ->get();
+        return response()->json($notifications);
+    });
+
+    Route::put('/notifications/{id}/lu', function ($id, \Illuminate\Http\Request $request) {
+        Notification::where('id', $id)
+            ->where('id_destinataire', $request->user()->id_utilisateur)
+            ->update(['lu' => true]);
+        return response()->json(['message' => 'Lu']);
+    });
+
+    Route::put('/notifications/lire-tout', function (\Illuminate\Http\Request $request) {
+        Notification::where('id_destinataire', $request->user()->id_utilisateur)
+            ->update(['lu' => true]);
+        return response()->json(['message' => 'Toutes lues']);
+    });
 
     // ── Patientes ────────────────────────────────────────────
     Route::apiResource('patientes', PatienteController::class, [
@@ -103,9 +166,23 @@ Route::middleware('auth:sanctum')->group(function () {
         'parameters' => ['supervisions' => 'id']
     ]);
 
+    // ── Consultations pédiatriques ────────────────────────────
+    Route::get('nouveau-nes/{id}/consultations-pediatrie',
+        [ConsultationPediatreController::class, 'parBebe']);
+
+    Route::apiResource('consultations-pediatrie', ConsultationPediatreController::class, [
+        'parameters' => ['consultations-pediatrie' => 'id']
+    ]);
+
     // ── Nouveau-nés ───────────────────────────────────────────
     Route::apiResource('nouveau-nes', NouveauNeController::class, [
         'parameters' => ['nouveau-nes' => 'id']
+    ]);
+
+    // ── Soins ─────────────────────────────────────────────────
+    Route::get('nouveau-nes/{id}/soins', [SoinController::class, 'parBebe']);
+    Route::apiResource('soins', SoinController::class, [
+        'parameters' => ['soins' => 'id']
     ]);
 
     // ── Salles ────────────────────────────────────────────────
@@ -124,31 +201,19 @@ Route::middleware('auth:sanctum')->group(function () {
         'parameters' => ['hospitalisations' => 'id']
     ]);
     Route::patch('hospitalisations/{id}/sortie', [HospitalisationController::class, 'sortie']);
-   // ── Dashboard ─────────────────────────────────────────────
-    Route::get('/dashboard/stats',        [DashboardController::class, 'stats']);
-    Route::get('/dashboard/activite-jour',[DashboardController::class, 'activiteJour']);
 
-    // PDF
+    // ── Dashboard général ─────────────────────────────────────
+    Route::get('/dashboard/stats',         [DashboardController::class, 'stats']);
+    Route::get('/dashboard/activite-jour', [DashboardController::class, 'activiteJour']);
+    Route::get('/dashboard/pediatre/stats', [\App\Http\Controllers\Api\DashboardPediatreController::class, 'stats']); // ← nouvelle ligne
+
+    // ── PDF ───────────────────────────────────────────────────
     Route::get('/pdf/liste-patientes',       [\App\Http\Controllers\Api\PdfController::class, 'listePatientes']);
     Route::get('/pdf/fiche-admission',       [\App\Http\Controllers\Api\PdfController::class, 'ficheAdmission']);
     Route::get('/pdf/planning-rdv',          [\App\Http\Controllers\Api\PdfController::class, 'planningRdv']);
     Route::get('/pdf/bulletin-sortie',       [\App\Http\Controllers\Api\PdfController::class, 'bulletinSortie']);
     Route::get('/pdf/occupation-lits',       [\App\Http\Controllers\Api\PdfController::class, 'occupationLits']);
     Route::get('/pdf/rapport-transmissions', [\App\Http\Controllers\Api\PdfController::class, 'rapportTransmissions']);
+    Route::get('/pdf/dossier-bebe/{id}',     [\App\Http\Controllers\Api\PdfController::class, 'dossierBebe']);
 
-    Route::put('/me', function(\Illuminate\Http\Request $request) {
-    $user = $request->user();
-    $user->update(['login' => $request->login]);
-    return response()->json(['message' => 'Profil mis à jour']);
-});
-
-Route::put('/me/password', function(\Illuminate\Http\Request $request) {
-    $request->validate(['ancien_mdp' => 'required', 'nouveau_mdp' => 'required|min:6']);
-    $user = $request->user();
-    if (!\Hash::check($request->ancien_mdp, $user->mdp)) {
-        return response()->json(['message' => 'Ancien mot de passe incorrect'], 422);
-    }
-    $user->update(['mdp' => \Hash::make($request->nouveau_mdp)]);
-    return response()->json(['message' => 'Mot de passe modifié avec succès']);
-});
 });
