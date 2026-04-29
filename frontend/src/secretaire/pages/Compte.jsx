@@ -54,7 +54,7 @@ export default function Compte() {
   const [saved, setSaved]         = useState(false);
   const [saveError, setSaveError] = useState("");
   const [loading, setLoading]     = useState(true);
-  const [form, setForm]           = useState({ nom: "", email: "", role: "" });
+  const [form, setForm]           = useState({ nom: "", email: "" });
 
   const [pwModal, setPwModal]     = useState(false);
   const [pw, setPw]               = useState({ ancien: "", nouveau: "", confirmer: "" });
@@ -75,10 +75,10 @@ export default function Compte() {
         });
         if (!res.ok) throw new Error("Erreur " + res.status);
         const data = await res.json();
-        setForm({ nom: data.login || "", email: data.login || "", role: data.role_acces || "" });
+        setForm({ nom: data.login || "", email: data.login || "" });
       } catch {
         const local = JSON.parse(localStorage.getItem("user") || "{}");
-        setForm({ nom: local.login || "", email: local.login || "", role: local.role_acces || "" });
+        setForm({ nom: local.login || "", email: local.login || "" });
       } finally { setLoading(false); }
     };
     fetchMe();
@@ -142,14 +142,14 @@ export default function Compte() {
             {initiales}
           </div>
           <div style={{ fontSize: 18, fontWeight: 800, color: "#111827", marginBottom: 4 }}>{form.nom}</div>
-          <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 20 }}>{form.role || "Secrétaire"}</div>
+          <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 20 }}></div>
 
           {/* Badges infos */}
           <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 10 }}>
             {[
               { icon: "🏥", label: "Service", value: "Gynécologie-Obstétrique" },
               { icon: "📍", label: "Localisation", value: "Darou Khoudoss · Dakar" },
-              { icon: "🔑", label: "Rôle", value: form.role || "Secrétaire" },
+               
             ].map((item, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: "#fdf8ff", borderRadius: 10, padding: "10px 14px", border: "1px solid #f0c4eb", textAlign: "left" }}>
                 <span style={{ fontSize: 18 }}>{item.icon}</span>
@@ -180,10 +180,7 @@ export default function Compte() {
               <label style={lbl}>Identifiant (Login)</label>
               <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} style={inp} placeholder="Votre identifiant" />
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={lbl}>Rôle</label>
-              <input value={form.role || "Secrétaire"} readOnly style={{ ...inp, background: "#f9fafb", color: "#9ca3af", cursor: "not-allowed" }} />
-            </div>
+          
 
             {saved     && <div style={{ background: "#dcfce7", color: "#15803d", borderRadius: 10, padding: "10px 14px", fontSize: 13, fontWeight: 600, marginBottom: 14, border: "1px solid #bbf7d0" }}>✓ Enregistré avec succès</div>}
             {saveError && <div style={{ background: "#fce7f3", color: "#be185d", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 14, border: "1px solid #fbcfe8" }}>⚠ {saveError}</div>}

@@ -189,7 +189,7 @@ export default function Patientes() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid #fce7f3" }}>
-                {["DÉBUT", "PATIENTE", "DATE NAISSANCE", "TÉLÉPHONE", "GROUPE SANGUIN", "ACTIONS"].map(h => (
+                {["DÉBUT", "PATIENTE", "DATE NAISSANCE", "TÉLÉPHONE","ACTIONS"].map(h => (
                   <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 11, color: "#d81bb5", fontWeight: 700, letterSpacing: "0.06em", background: "#fdf8ff" }}>{h}</th>
                 ))}
               </tr>
@@ -214,14 +214,7 @@ export default function Patientes() {
                     </td>
                     <td style={{ padding: "14px 20px", fontSize: 13, color: "#4b5563" }}>{formatDate(p.date_naissance)}</td>
                     <td style={{ padding: "14px 20px", fontSize: 13, color: "#4b5563" }}>{p.telephone || "—"}</td>
-                    <td style={{ padding: "14px 20px" }}>
-                      {p.groupe_sanguin ? (
-                        <span style={{ background: gs?.bg || "#f3f4f6", color: gs?.color || "#374151", borderRadius: 20, padding: "4px 12px", fontSize: 12, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 5 }}>
-                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: gs?.color || "#374151" }}/>
-                          {p.groupe_sanguin}
-                        </span>
-                      ) : "—"}
-                    </td>
+                    
                     <td style={{ padding: "14px 20px" }}>
                       <button onClick={() => openView(p)} style={{ background: "#fdf0fb", color: "#d81bb5", border: "1px solid #f5d0f0", borderRadius: 20, padding: "6px 16px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
                         Voir
@@ -240,7 +233,7 @@ export default function Patientes() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.25)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200 }}>
           <div style={{ background: "#fff", borderRadius: 20, padding: 32, width: 480, maxWidth: "90vw", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
-              <Avatar nom={viewModal.nom} prenom={viewModal.prenom} idx={0} />
+              <Avatar nom={viewModal.nom} prenom={viewModal.prenom} idx={0} />F
               <div style={{ flex: 1 }}>
                 <h2 style={{ fontSize: 17, fontWeight: 800, color: "#111827", margin: 0 }}>{viewModal.prenom} {viewModal.nom}</h2>
                 <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>Dossier #{viewModal.id_patient}</p>
@@ -259,13 +252,7 @@ export default function Patientes() {
                 <div style={{ marginBottom: 14 }}><label style={lbl}>Date de naissance</label><input type="date" value={editForm.date_naissance || ""} onChange={e => setEditForm({ ...editForm, date_naissance: e.target.value })} style={inp} /></div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
                   <div><label style={lbl}>Téléphone</label><input value={editForm.telephone || ""} onChange={e => setEditForm({ ...editForm, telephone: e.target.value })} style={inp} /></div>
-                  <div>
-                    <label style={lbl}>Groupe sanguin</label>
-                    <select value={editForm.groupe_sanguin || ""} onChange={e => setEditForm({ ...editForm, groupe_sanguin: e.target.value })} style={inp}>
-                      <option value="">-- Sélectionner --</option>
-                      {["A+","A-","B+","B-","AB+","AB-","O+","O-"].map(g => <option key={g} value={g}>{g}</option>)}
-                    </select>
-                  </div>
+                 
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
                   <div>
@@ -294,7 +281,7 @@ export default function Patientes() {
                     ["Nom",                viewModal.nom || "—"],
                     ["Date de naissance",  formatDate(viewModal.date_naissance)],
                     ["Téléphone",          viewModal.telephone || "—"],
-                    ["Groupe sanguin",     viewModal.groupe_sanguin || "—"],
+                   
                     ["Situation",          viewModal.situation_matrimoniale || "—"],
                     ["Adresse",            viewModal.adresse || "—"],
                     ["Motif",              viewModal.motif || "—"],
@@ -352,13 +339,7 @@ export default function Patientes() {
                 <label style={lbl}>Téléphone</label>
                 <input placeholder="77 000 00 00" value={form.telephone} onChange={e => setForm({ ...form, telephone: e.target.value })} style={inp} />
               </div>
-              <div>
-                <label style={lbl}>Groupe sanguin</label>
-                <select value={form.groupe_sanguin} onChange={e => setForm({ ...form, groupe_sanguin: e.target.value })} style={inp}>
-                  <option value="">-- Sélectionner --</option>
-                  {["A+","A-","B+","B-","AB+","AB-","O+","O-"].map(g => <option key={g} value={g}>{g}</option>)}
-                </select>
-              </div>
+              
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>

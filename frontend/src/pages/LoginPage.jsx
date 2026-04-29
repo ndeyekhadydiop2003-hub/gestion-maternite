@@ -146,8 +146,8 @@ const LoginPage = () => {
               </svg>
             </div>
             <div className="brand-text">
-              <h1>Maternité Poste de Santé Darou Khoudoss</h1>
-              <p>Service Gynécologie-Obstétrique · Dakar</p>
+              <h1>Maternité CHRANT</h1>
+              <p>Service Gynécologie-Obstétrique · Thies</p>
             </div>
           </div>
           <div className="hero">
@@ -177,7 +177,7 @@ const LoginPage = () => {
               </svg>
             </div>
             <div className="top-mini-name">
-              <div className="a">Maternité Darou Khoudoss</div>
+              <div className="a">Maternité CHRANT</div>
               <div className="b">Portail Médical Sécurisé</div>
             </div>
           </div>

@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\ConsultationAnesthesieController;
 use App\Http\Controllers\Api\ConsultationPlanningController;
 use App\Http\Controllers\Api\ConsultationInfectiologieController;
 use App\Http\Controllers\Api\PlanifierRvController;
+use App\Http\Controllers\Api\PdfController;
 
 // ============================================================
 // ROUTES PUBLIQUES
@@ -42,6 +43,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me',      [AuthController::class, 'me']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
+    // ── PDF ──────────────────────────────────────────────────────
+    Route::prefix('pdf')->group(function () {
+    Route::get('liste-patientes',    [PdfController::class, 'listePatientes']);
+    Route::get('fiche-admission',    [PdfController::class, 'ficheAdmission']);
+    Route::get('planning-rdv',       [PdfController::class, 'planningRdv']);
+    Route::get('bulletin-sortie',    [PdfController::class, 'bulletinSortie']);
+    Route::get('occupation-lits',    [PdfController::class, 'occupationLits']);
+    Route::get('rapport-transmissions', [PdfController::class, 'rapportTransmissions']);
+    });
 
     // ── Accessible à tous les connectés ──────────────────────
     Route::apiResource('planifier-rv', PlanifierRvController::class);
