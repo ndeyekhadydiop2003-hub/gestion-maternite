@@ -95,7 +95,7 @@ export default function Hospitalisation() {
 
   const fetchLits = async () => {
     try {
-      const res = await fetch(`${API}/lits/disponibles`, { headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` } });
+      const res = await fetch(`${API}/lits`, { headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` } });
       const data = await res.json();
       setLits(Array.isArray(data) ? data : data.data || []);
     } catch (_) {
@@ -393,7 +393,7 @@ export default function Hospitalisation() {
               <label style={lbl}>Patiente *</label>
               <select value={form.id_patient} onChange={e => setForm({ ...form, id_patient: e.target.value })} style={inp}>
                 <option value="">-- Sélectionner --</option>
-                {patientes.map(p => <option key={p.id_patient} value={p.id_patient}>{p.nom}</option>)}
+                {patientes.map(p => <option key={p.id_patient} value={p.id_patient}>{p.prenom} {p.nom}</option>)}
               </select>
             </div>
             <div style={{ marginBottom: 14 }}>

@@ -67,7 +67,7 @@ export default function RendezVous() {
 
   const fetchPersonnel = async () => {
     try {
-      const res = await fetch(`${API}/personnel-medical`, { headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` } });
+      const res = await fetch(`${API}/personnel`, { headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` } });
       const data = await res.json();
       setPersonnel(Array.isArray(data) ? data : data.data || []);
     } catch (_) {}
@@ -268,7 +268,7 @@ export default function RendezVous() {
                   <label style={lbl}>Patiente</label>
                   <select value={editForm.id_patient} onChange={e => setEditForm({ ...editForm, id_patient: e.target.value })} style={inp}>
                     <option value="">-- Sélectionner une patiente --</option>
-                    {patientes.map(p => <option key={p.id_patient} value={p.id_patient}>{p.nom}</option>)}
+                    {patientes.map(p => <option key={p.id_patient} value={p.id_patient}>{p.prenom} {p.nom}</option>)}
                   </select>
                 </div>
                 <div style={{ marginBottom: 14 }}>
@@ -356,7 +356,7 @@ export default function RendezVous() {
               <label style={lbl}>Patiente *</label>
               <select value={form.id_patient} onChange={e => setForm({ ...form, id_patient: e.target.value })} style={inp}>
                 <option value="">-- Sélectionner une patiente --</option>
-                {patientes.map(p => <option key={p.id_patient} value={p.id_patient}>{p.nom}</option>)}
+                {patientes.map(p => <option key={p.id_patient} value={p.id_patient}>{p.prenom} {p.nom}</option>)}
               </select>
             </div>
             <div style={{ marginBottom: 14 }}>

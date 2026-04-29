@@ -51,21 +51,21 @@ const LoginPage = () => {
       const res = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ login, mdp: password }),
+        body: JSON.stringify({ login, password }), // ✅ CORRIGÉ : mdp → password
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Identifiants incorrects');
 
       // Sauvegarde token et user
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('user', JSON.stringify(data.utilisateur));
 
       // Vider les champs
       setLogin('');
       setPassword('');
 
       // ✅ Redirection automatique selon role_acces
-      const route = getRedirectByRole(data.user?.role_acces);
+      const route = getRedirectByRole(data.utilisateur?.role_acces); // ✅ CORRIGÉ : data.user → data.utilisateur
       navigate(route, { replace: true });
 
     } catch (err) {
@@ -203,7 +203,7 @@ const LoginPage = () => {
               <input
                 type="password"
                 value={password}
-                autoComplete="new-password"
+                autoComplete="current-password"
                 onChange={(e) => setPassword(e.target.value)}
                 className="inp-field"
                 placeholder="Votre mot de passe"

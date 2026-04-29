@@ -50,19 +50,19 @@ const LoginPage = () => {
       const res = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ login, mdp: password }),
+        body: JSON.stringify({ login, password }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Identifiants incorrects');
 
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('user', JSON.stringify(data.utilisateur));
 
       setLogin('');
       setPassword('');
 
-      const role = data.user?.role_acces;
+      const role = data.utilisateur?.role_acces;
 
       if (role === 'secretaire')       navigate('/secretaire');
       else if (role === 'sage_femme')  navigate('/sagefemme');
@@ -204,14 +204,15 @@ const LoginPage = () => {
             <label className="flabel">Mot de passe</label>
             <div className="inp-wrap">
               <div className="inp-icon">🔒</div>
-              <input
-                type="password"
-                value={password}
-                autoComplete="new-password"
-                onChange={e => setPassword(e.target.value)}
-                className="inp-field"
-                placeholder="Votre mot de passe"
-              />
+             <input
+          type="password"
+          value={password}
+          autoComplete="current-password"
+          onChange={(e) => setPassword(e.target.value)}
+          onInput={(e) => setPassword(e.target.value)} 
+          className="inp-field"
+          placeholder="Votre mot de passe"
+        />
             </div>
 
             <div className="row-misc">
