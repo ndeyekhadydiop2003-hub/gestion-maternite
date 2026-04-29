@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Utilisateur;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -21,7 +21,7 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $utilisateur = Utilisateur::where('login', $request->login)->first();
+        $utilisateur = User::where('login', $request->login)->first();
 
         if (!$utilisateur || !Hash::check($request->password, $utilisateur->password)) {
             throw ValidationException::withMessages([

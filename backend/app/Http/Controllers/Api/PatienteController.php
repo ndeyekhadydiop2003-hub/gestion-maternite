@@ -13,7 +13,7 @@ class PatienteController extends Controller
         $patientes = Patiente::with('personnel')->orderBy('nom')->get();
         return response()->json($patientes);
     }
- 
+
     // Créer une patiente
     public function store(Request $request)
     {
@@ -30,11 +30,11 @@ class PatienteController extends Controller
             'notes_cliniques'        => 'nullable|string',
             'id_personnel'           => 'nullable|exists:personnel_medical,id_personnel',
         ]);
- 
+
         $patiente = Patiente::create($validated);
         return response()->json($patiente, 201);
     }
- 
+
     // Afficher une patiente avec tout son dossier
     public function show($id)
     {
@@ -54,10 +54,10 @@ class PatienteController extends Controller
             'rendezVous',
             'hospitalisations.lit.salle',
         ])->findOrFail($id);
- 
+
         return response()->json($patiente);
     }
- 
+
     // Modifier une patiente
     public function update(Request $request, $id)
     {
@@ -74,11 +74,11 @@ class PatienteController extends Controller
             'statut'                 => 'in:active,inactive,archivee',
             'notes_cliniques'        => 'nullable|string',
         ]);
- 
+
         $patiente->update($validated);
         return response()->json($patiente);
     }
- 
+
     // Supprimer une patiente
     public function destroy($id)
     {

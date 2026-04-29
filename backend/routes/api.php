@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\ConsultationPsychologieController;
 use App\Http\Controllers\Api\ConsultationAnesthesieController;
 use App\Http\Controllers\Api\ConsultationPlanningController;
 use App\Http\Controllers\Api\ConsultationInfectiologieController;
+use App\Http\Controllers\Api\PlanifierRvController;
 
 // ============================================================
 // ROUTES PUBLIQUES
@@ -43,6 +44,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
     // ── Accessible à tous les connectés ──────────────────────
+    Route::apiResource('planifier-rv', PlanifierRvController::class);
+    Route::post('planifier-rv/{id}/confirmer', [PlanifierRvController::class, 'confirmer']);
+    Route::apiResource('patientes',        PatienteController::class);
+    Route::get('personnel', [PersonnelMedicalController::class, 'index']);
     Route::apiResource('patientes',        PatienteController::class);
     Route::apiResource('grossesses',       GrossesseController::class);
     Route::apiResource('consultations',    ConsultationController::class);
