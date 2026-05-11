@@ -3,6 +3,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AntecedentMedical;
+use App\Models\ConsultationInfectiologie;
 use Illuminate\Http\Request;
 class ConsultationInfectiologieController extends Controller
 {
@@ -18,10 +19,10 @@ class ConsultationInfectiologieController extends Controller
             'statut_resolution'=> 'nullable|in:en_cours,resolu,chronique,echec',
             'risque_neonatal'  => 'nullable|in:faible,modere,eleve',
         ]);
- 
+
         return response()->json(ConsultationInfectiologie::create($validated), 201);
     }
- 
+
     public function update(Request $request, $id)
     {
         $detail = ConsultationInfectiologie::findOrFail($id);
@@ -32,6 +33,6 @@ class ConsultationInfectiologieController extends Controller
         return response()->json($detail);
     }
 }
- 
- 
+
+
 ?>

@@ -42,7 +42,7 @@ function ModalConsultation({ patiente, onClose, onSaved }) {
   const [form, setForm] = useState({
     id_patient: patiente.id_patient, id_grossesse: '',
     date_consultation: new Date().toISOString().split('T')[0],
-    motif_consultation: '', poids: '', temperature: '', tension: '', observation: '', prochain_rdv: '',
+    motif : '', poids: '', temperature: '', tension: '', observation: '', prochain_rdv: '',
     hauteur_uterine: '', bruit_coeur_foetal: '', mouvements_foetaux: '', gravite: '', parite: '', type_presentation: '',
     methode_contraceptive: '', desir_grossesse: '',
     type_infection: '', agent_pathogene: '', traitement_ATB: '', risque_neonatal: '', statut_resolution: '',
@@ -60,7 +60,7 @@ function ModalConsultation({ patiente, onClose, onSaved }) {
   const handleSave = async () => {
     setSaving(true); setError('');
     try {
-      const c = await consultationsAPI.create({ id_patient:form.id_patient, id_grossesse:form.id_grossesse||null, date_consultation:form.date_consultation, motif_consultation:form.motif_consultation, poids:form.poids||null, temperature:form.temperature||null, tension:form.tension||null, observation:form.observation, prochain_rdv:form.prochain_rdv||null });
+      const c = await consultationsAPI.create({ id_patient:form.id_patient, id_grossesse:form.id_grossesse||null, date_consultation:form.date_consultation, motif :form.motif , poids:form.poids||null, temperature:form.temperature||null, tension:form.tension||null, observation:form.observation, prochain_rdv:form.prochain_rdv||null });
       const idC = c.id_consultation;
       if(form.hauteur_uterine||form.bruit_coeur_foetal||form.mouvements_foetaux)
         await sageFemmeAPI.create({ id_consultation:idC, id_grossesse:form.id_grossesse||null, hauteur_uterine:form.hauteur_uterine||null, bruit_coeur_foetal:form.bruit_coeur_foetal||null, mouvements_foetaux:form.mouvements_foetaux||null, gravite:form.gravite||null, parite:form.parite||null, type_presentation:form.type_presentation||null });
@@ -95,7 +95,7 @@ function ModalConsultation({ patiente, onClose, onSaved }) {
               <div className="sf-field"><label>Date consultation</label><input type="date" value={form.date_consultation} onChange={e=>set('date_consultation',e.target.value)}/></div>
               <div className="sf-field"><label>Grossesse liée</label><select value={form.id_grossesse} onChange={e=>set('id_grossesse',e.target.value)}><option value="">— Aucune —</option>{grossesses.map(g=><option key={g.id_grossesse} value={g.id_grossesse}>{g.semaines_amenorrhee||0} SA — {g.statut}</option>)}</select></div>
             </div>
-            <div className="sf-field"><label>Motif</label><input value={form.motif_consultation} onChange={e=>set('motif_consultation',e.target.value)} placeholder="Ex: Visite de routine..."/></div>
+            <div className="sf-field"><label>Motif</label><input value={form.motif } onChange={e=>set('motif',e.target.value)} placeholder="Ex: Visite de routine..."/></div>
             <div className="sf-form-row">
               <div className="sf-field"><label>Poids (kg)</label><input type="number" step="0.1" value={form.poids} onChange={e=>set('poids',e.target.value)} placeholder="68.5"/></div>
               <div className="sf-field"><label>Température (°C)</label><input type="number" step="0.1" value={form.temperature} onChange={e=>set('temperature',e.target.value)} placeholder="37.2"/></div>
@@ -262,7 +262,7 @@ export default function Patientes() {
               {detail.consultations.map(c=>(
                 <tr key={c.id_consultation}>
                   <td><strong>{c.date_consultation}</strong></td>
-                  <td>{c.motif_consultation||'—'}</td>
+                  <td>{c.motif ||'—'}</td>
                   <td>{c.poids?c.poids+' kg':'—'}</td>
                   <td>{c.tension||'—'}</td>
                   <td>{c.prochain_rdv?<span className="badge badge-blue">{c.prochain_rdv}</span>:'—'}</td>

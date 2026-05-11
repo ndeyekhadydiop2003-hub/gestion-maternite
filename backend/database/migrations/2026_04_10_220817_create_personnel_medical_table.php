@@ -13,9 +13,11 @@ return new class extends Migration
     $table->foreignId('id_utilisateur')
           ->constrained('utilisateurs', 'id_utilisateur')
           ->onDelete('restrict'); // archiver avant suppression
-  
+
     $table->string('telephone');
     $table->string('fonction');
+
+
     $table->timestamps();
 });
     }

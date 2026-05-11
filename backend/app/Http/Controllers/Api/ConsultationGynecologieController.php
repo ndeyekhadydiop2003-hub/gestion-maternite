@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\ConsultationGynecologie;
+use App\Models\ConsultationPsychologie;
 use Illuminate\Support\Facades\Hash;
 
 class ConsultationGynecologieController extends Controller
@@ -19,10 +21,10 @@ class ConsultationGynecologieController extends Controller
             'diagnostic'          => 'nullable|string',
             'type_contraception'  => 'nullable|string',
         ]);
- 
+
         return response()->json(ConsultationGynecologie::create($validated), 201);
     }
- 
+
     public function update(Request $request, $id)
     {
         $detail = ConsultationGynecologie::findOrFail($id);
@@ -33,7 +35,7 @@ class ConsultationGynecologieController extends Controller
         return response()->json($detail);
     }
 }
- 
+
 class ConsultationPsychologieController extends Controller
 {
     public function store(Request $request)
@@ -47,10 +49,10 @@ class ConsultationPsychologieController extends Controller
             'score_edinburgh'  => 'nullable|integer|min:0|max:30',
             'orientation_ext'  => 'nullable|string',
         ]);
- 
+
         return response()->json(ConsultationPsychologie::create($validated), 201);
     }
- 
+
     public function update(Request $request, $id)
     {
         $detail = ConsultationPsychologie::findOrFail($id);

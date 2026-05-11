@@ -3,6 +3,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\NouveauNe;
+use App\Models\Patiente;
+
+
+
 use Illuminate\Http\Request;
 class NouveauNeController extends Controller
 {
@@ -10,11 +14,11 @@ class NouveauNeController extends Controller
     {
         return response()->json(NouveauNe::with('accouchement')->get());
     }
- 
+
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'id_accouchement'  => 'required|exists:accouchements,id_accouchement',
+            'id_accouchement'  => 'nullable|exists:accouchements,id_accouchement',
             'id_patient'       => 'nullable|exists:patientes,id_patient',
             'sexe'             => 'required|in:masculin,feminin,indetermine',
             'poids_naissance'  => 'nullable|numeric',
@@ -23,10 +27,10 @@ class NouveauNeController extends Controller
             'apgar_5min'       => 'nullable|integer|min:0|max:10',
             'etat_sante'       => 'in:bon,moyen,critique',
         ]);
- 
+
         return response()->json(NouveauNe::create($validated), 201);
     }
- 
+
     public function show($id)
     {
         return response()->json(
@@ -34,7 +38,7 @@ class NouveauNeController extends Controller
                      ->findOrFail($id)
         );
     }
- 
+
     public function update(Request $request, $id)
     {
         $nouveauNe = NouveauNe::findOrFail($id);
@@ -44,11 +48,16 @@ class NouveauNeController extends Controller
         ]));
         return response()->json($nouveauNe);
     }
- 
+
     public function destroy($id)
     {
         NouveauNe::findOrFail($id)->delete();
         return response()->json(['message' => 'Nouveau-né supprimé']);
     }
+
+
+
+
 }
+
 ?>

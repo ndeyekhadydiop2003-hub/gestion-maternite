@@ -3,9 +3,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\ConsultationPlanning;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
- 
+
 
 class ConsultationPlanningController extends Controller
 {
@@ -18,10 +19,10 @@ class ConsultationPlanningController extends Controller
             'date_prochaine_visite'=> 'nullable|date',
             'notes'                => 'nullable|string',
         ]);
- 
+
         return response()->json(ConsultationPlanning::create($validated), 201);
     }
- 
+
     public function update(Request $request, $id)
     {
         $detail = ConsultationPlanning::findOrFail($id);

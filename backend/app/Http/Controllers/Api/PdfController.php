@@ -30,7 +30,7 @@ class PdfController extends Controller
         $html .= '<p>Maternité · Généré le ' . now()->format('d/m/Y à H:i') . ' · Total : ' . count($patientes) . ' patiente(s)</p>';
         $html .= '<table><tr><th>#</th><th>Nom</th><th>Date naissance</th><th>Téléphone</th><th>Groupe sanguin</th><th>Motif</th></tr>';
         foreach ($patientes as $i => $p) {
-            $html .= '<tr><td>' . ($i+1) . '</td><td>' . $p->nom . '</td><td>' . $p->date_naissance . '</td><td>' . ($p->telephone ?? '—') . '</td><td>' . ($p->groupe_sanguin ?? '—') . '</td><td>' . ($p->motif ?? '—') . '</td></tr>';
+            $html .= '<tr><td>' . ($i+1) . '</td><td>' . $p->nom . '</td><td>' . $p->date_naissance . '</td><td>' . ($p->telephone ?? '—') . '</td><td>' . ($p->groupe_sanguin ?? '—') . '</td><td>' . ($p->motif_consultation?? '—') . '</td></tr>';
         }
         $html .= '</table><div class="footer">Maternité — Document confidentiel</div>';
         return Pdf::loadHTML($html)->setPaper('a4', 'landscape')->download('liste-patientes.pdf');
@@ -44,7 +44,7 @@ class PdfController extends Controller
         $html .= '<p>Maternité · Généré le ' . now()->format('d/m/Y à H:i') . '</p>';
         $html .= '<table><tr><th>Nom</th><th>Date naissance</th><th>Téléphone</th><th>Groupe sanguin</th><th>Motif</th></tr>';
         foreach ($patientes as $p) {
-            $html .= '<tr><td>' . $p->nom . '</td><td>' . $p->date_naissance . '</td><td>' . ($p->telephone ?? '—') . '</td><td>' . ($p->groupe_sanguin ?? '—') . '</td><td>' . ($p->motif ?? '—') . '</td></tr>';
+            $html .= '<tr><td>' . $p->nom . '</td><td>' . $p->date_naissance . '</td><td>' . ($p->telephone ?? '—') . '</td><td>' . ($p->groupe_sanguin ?? '—') . '</td><td>' . ($p->motif_consultation ?? '—') . '</td></tr>';
         }
         $html .= '</table><div class="footer">Maternité — Document confidentiel</div>';
         return Pdf::loadHTML($html)->setPaper('a4', 'landscape')->download('fiche-admission.pdf');
@@ -61,7 +61,7 @@ class PdfController extends Controller
         $html .= '<p>Maternité · ' . now()->format('d/m/Y') . ' · Total : ' . count($rdvs) . ' rendez-vous</p>';
         $html .= '<table><tr><th>Heure</th><th>Patiente ID</th><th>Motif</th><th>Statut</th></tr>';
         foreach ($rdvs as $r) {
-            $html .= '<tr><td>' . $r->heure_rv . '</td><td>#' . $r->id_patient . '</td><td>' . ($r->motif ?? '—') . '</td><td>' . $r->statut . '</td></tr>';
+            $html .= '<tr><td>' . $r->heure_rv . '</td><td>#' . $r->id_patient . '</td><td>' . ($r->motif_consultation ?? '—') . '</td><td>' . $r->statut . '</td></tr>';
         }
         if (count($rdvs) === 0) {
             $html .= '<tr><td colspan="4" style="text-align:center">Aucun rendez-vous aujourd\'hui</td></tr>';
@@ -78,7 +78,7 @@ class PdfController extends Controller
         $html .= '<p>Maternité · Généré le ' . now()->format('d/m/Y à H:i') . ' · Total : ' . count($sorties) . ' sortie(s)</p>';
         $html .= '<table><tr><th>Patiente ID</th><th>Lit ID</th><th>Date admission</th><th>Date sortie</th><th>Motif</th></tr>';
         foreach ($sorties as $s) {
-            $html .= '<tr><td>#' . $s->id_patient . '</td><td>#' . $s->id_lit . '</td><td>' . $s->date_admission . '</td><td>' . ($s->date_sorti ?? '—') . '</td><td>' . $s->motif . '</td></tr>';
+            $html .= '<tr><td>#' . $s->id_patient . '</td><td>#' . $s->id_lit . '</td><td>' . $s->date_admission . '</td><td>' . ($s->date_sorti ?? '—') . '</td><td>' . $s->motif_consultation . '</td></tr>';
         }
         if (count($sorties) === 0) {
             $html .= '<tr><td colspan="5" style="text-align:center">Aucune sortie enregistrée</td></tr>';

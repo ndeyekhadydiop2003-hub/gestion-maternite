@@ -14,6 +14,8 @@ class User extends Authenticatable
     protected $table      = 'utilisateurs';
     protected $primaryKey = 'id_utilisateur';
 
+
+
     protected $fillable = [
          'nom',
     'prenom',
@@ -39,8 +41,19 @@ class User extends Authenticatable
         return $this->hasOne(PersonnelMedical::class, 'id_utilisateur', 'id_utilisateur');
     }
 
-    // ✅ CORRECTION 4 : hospitalisations supprimée ici
-    // Un utilisateur n'a pas de hospitalisations directement
-    // C'est la PATIENTE qui a des hospitalisations
-    // → utilise $patiente->hospitalisations() à la place
+            public function getKeyName()
+        {
+            return 'id_utilisateur';
+        }
+
+        public function getAuthIdentifier()
+        {
+            return $this->id_utilisateur;
+        }
+
+        public function personnel()
+        {
+            return $this->hasOne(PersonnelMedical::class, 'id_utilisateur', 'id_utilisateur');
+        }
+
 }

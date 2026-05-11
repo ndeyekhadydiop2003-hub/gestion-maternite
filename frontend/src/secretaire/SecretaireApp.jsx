@@ -6,17 +6,19 @@ import Hospitalisation from "./pages/Hospitalisation";
 import RendezVous from "./pages/RendezVous";
 import Documents from "./pages/Documents";
 import Compte from "./pages/Compte";
+import Notifications from "./pages/Notifications";
 
 export default function SecretaireApp() {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<Accueil />} />
-        <Route path="/patientes" element={<Patientes />} />
-        <Route path="/hospitalisation" element={<Hospitalisation />} />
-        <Route path="/rendez-vous" element={<RendezVous />} />
-        <Route path="/documents" element={<Documents />} />
-        <Route path="/compte" element={<Compte />} />
+        <Route index element={<Accueil />} />
+        <Route path="patientes" element={<Patientes />} />
+        <Route path="hospitalisation" element={<Hospitalisation />} />
+        <Route path="rendez-vous" element={<RendezVous />} />
+        <Route path="documents" element={<Documents />} />
+        <Route path="notifications" element={<Notifications />} />
+        <Route path="compte" element={<Compte />} />
         <Route path="*" element={<Navigate to="/secretaire" replace />} />
       </Routes>
     </Layout>

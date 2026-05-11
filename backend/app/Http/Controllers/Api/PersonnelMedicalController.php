@@ -11,30 +11,31 @@ class PersonnelMedicalController extends Controller
     {
         return response()->json(PersonnelMedical::with('utilisateur')->get());
     }
- 
+
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'id_utilisateur' => 'required|exists:utilisateurs,id_utilisateur',
+            'id_utilisateur' => 'nullable|exists:utilisateurs,id_utilisateur',
             'nom'            => 'required|string|max:100',
             'prenom'         => 'required|string|max:100',
             'telephone'      => 'required|string|max:20',
             'fonction'       => 'required|string|max:100',
+            'service'        => 'nullable|string|max:100',
         ]);
- 
+
         $personnel = PersonnelMedical::create($validated);
         return response()->json($personnel, 201);
     }
- 
+
     public function show($id)
     {
         $personnel = PersonnelMedical::with([
             'utilisateur', 'patientes', 'consultations', 'rendezVous'
         ])->findOrFail($id);
- 
+
         return response()->json($personnel);
     }
- 
+
     public function update(Request $request, $id)
     {
         $personnel = PersonnelMedical::findOrFail($id);
@@ -46,12 +47,12 @@ class PersonnelMedicalController extends Controller
         ]));
         return response()->json($personnel);
     }
- 
+
     public function destroy($id)
     {
         PersonnelMedical::findOrFail($id)->delete();
         return response()->json(['message' => 'Personnel supprimé']);
     }
 }
- 
+
 ?>

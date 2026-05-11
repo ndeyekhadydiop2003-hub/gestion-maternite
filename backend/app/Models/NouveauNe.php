@@ -3,33 +3,47 @@
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
-// app/Models/NouveauNe.php
-// ─────────────────────────────────────────
 class NouveauNe extends Model
 {
     protected $table      = 'nouveau_nes';
     protected $primaryKey = 'id_nouveau_ne';
- 
+
     protected $fillable = [
-        'id_accouchement', 'id_patient', 'sexe',
-        'poids_naissance', 'taille',
-        'apgar_1min', 'apgar_5min', 'etat_sante',
+        'id_accouchement',
+        'id_patient',
+        'sexe',
+        'poids_naissance',
+        'taille',
+        'apgar_1min',
+        'apgar_5min',
+        'etat_sante',
     ];
- 
+
     public function accouchement()
     {
         return $this->belongsTo(Accouchement::class, 'id_accouchement', 'id_accouchement');
     }
- 
-    // (0,1) → bébé peut devenir patient
-    public function dossierPatient()
+
+    public function patiente()
     {
         return $this->belongsTo(Patiente::class, 'id_patient', 'id_patient');
     }
- 
+
     public function consultationPediatrie()
     {
         return $this->hasMany(ConsultationPediatrie::class, 'id_nouveau_ne', 'id_nouveau_ne');
     }
+
+    public function Vaccins()
+   {
+    return $this->hasMany(Vaccin::class, 'id_nouveau_ne', 'id_nouveau_ne');
+   }
+
+
+
+    public function dossierPatient()
+    {
+        return $this->belongsTo(Patiente::class, 'id_patient', 'id_patient');
+    }
+
 }
-?>

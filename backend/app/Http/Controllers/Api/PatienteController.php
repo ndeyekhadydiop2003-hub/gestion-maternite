@@ -25,7 +25,7 @@ class PatienteController extends Controller
             'telephone'              => 'nullable|string|max:20',
             'adresse'                => 'nullable|string',
             'groupe_sanguin'         => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
-            'motif'                  => 'nullable|string',
+            'motif_consultation'     => 'nullable|string',
             'statut'                 => 'in:active,inactive,archivee',
             'notes_cliniques'        => 'nullable|string',
             'id_personnel'           => 'nullable|exists:personnel_medical,id_personnel',
@@ -70,7 +70,7 @@ class PatienteController extends Controller
             'telephone'              => 'nullable|string|max:20',
             'adresse'                => 'nullable|string',
             'groupe_sanguin'         => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
-            'motif'                  => 'nullable|string',
+            'motif_consultation'     => 'nullable|string',
             'statut'                 => 'in:active,inactive,archivee',
             'notes_cliniques'        => 'nullable|string',
         ]);

@@ -24,7 +24,7 @@ return new class extends Migration
           ->constrained('personnel_medical', 'id_personnel')
           ->onDelete('restrict');
     $table->date('date_consultation');
-    $table->string('motif_consultation')->nullable();
+    $table->string('motif')->nullable();
     $table->decimal('poids', 5, 2)->nullable();
     // ✅ CORRECTION : hauteur_uterine supprimée ici — déjà dans details_sage_femme (redondance évitée)
     $table->decimal('temperature', 4, 1)->nullable();

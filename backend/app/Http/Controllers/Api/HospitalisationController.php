@@ -15,45 +15,44 @@ class HospitalisationController extends Controller
             Hospitalisation::with(['patiente', 'lit.salle', 'personnel'])->get()
         );
     }
- 
+
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'id_patient'   => 'required|exists:patientes,id_patient',
-            'id_lit'       => 'required|exists:lits,id_lit',
-            'id_personnel' => 'nullable|exists:personnel_medical,id_personnel',
-            'date_entree'  => 'required|date',
-            'date_sortie'  => 'nullable|date|after:date_entree',
-            'motif'        => 'required|string',
-            'statut'       => 'in:en_cours,terminee,transferee',
-        ]);
- 
+        'id_patient'     => 'required|exists:patientes,id_patient',
+        'id_lit'         => 'nullable|exists:lits,id_lit',
+        'id_personnel'   => 'nullable|exists:personnel_medical,id_personnel',
+        'date_admission' => 'required|date',   // ← changé
+        'date_sorti'     => 'nullable|date|after:date_admission',  // ← changé
+        'motif_consultation'          => 'required|string',
+        'statut'         => 'in:active,en_attente,terminee,transferee',
+   ]);
+
         // Marquer le lit comme occupé
         Lit::findOrFail($validated['id_lit'])->update(['statut' => 'occupe']);
- 
+
         return response()->json(Hospitalisation::create($validated), 201);
     }
- 
+
     public function show($id)
     {
         return response()->json(
             Hospitalisation::with(['patiente', 'lit.salle', 'personnel'])->findOrFail($id)
         );
     }
- 
+
     public function update(Request $request, $id)
     {
         $hosp = Hospitalisation::findOrFail($id);
-        $hosp->update($request->only(['date_sortie', 'motif', 'statut']));
- 
-        // Libérer le lit si hospitalisiation terminée
+        $hosp->update($request->only(['date_sorti', 'motif_consultation', 'statut']));
+
         if ($request->statut === 'terminee') {
-            Lit::find($hosp->id_lit)->update(['statut' => 'disponible']);
+            Lit::find($hosp->id_lit)->update(['statut' => 'libre']);
         }
- 
+
         return response()->json($hosp);
     }
- 
+
     public function destroy($id)
     {
         Hospitalisation::findOrFail($id)->delete();

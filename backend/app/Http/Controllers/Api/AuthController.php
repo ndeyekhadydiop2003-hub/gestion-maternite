@@ -42,6 +42,7 @@ class AuthController extends Controller
                 'login'      => $utilisateur->login,
                 'role_acces' => $utilisateur->role_acces,
                 'personnel'  => $utilisateur->personnel,
+                
             ],
         ]);
     }
@@ -73,4 +74,48 @@ class AuthController extends Controller
             'personnel'  => $utilisateur->personnel,
         ]);
     }
+
+    // ─────────────────────────────────────────
+// PUT /api/me
+// ─────────────────────────────────────────
+public function updateMe(Request $request)
+{
+    $utilisateur = $request->user();
+
+    $request->validate([
+        'login' => 'required|string|unique:utilisateurs,login,' . $utilisateur->id_utilisateur . ',id_utilisateur',
+    ]);
+
+    $utilisateur->login = $request->login;
+    $utilisateur->save();
+
+    return response()->json([
+        'message' => 'Identifiant mis à jour avec succès.',
+        'login'   => $utilisateur->login,
+    ]);
 }
+
+// ─────────────────────────────────────────
+// PUT /api/me/password
+// ─────────────────────────────────────────
+public function updatePassword(Request $request)
+{
+    $utilisateur = $request->user();
+
+    $request->validate([
+        'ancien_mdp'  => 'required|string',
+        'nouveau_mdp' => 'required|string|min:6',
+    ]);
+
+    if (!Hash::check($request->ancien_mdp, $utilisateur->password)) {
+        return response()->json(['message' => 'Ancien mot de passe incorrect.'], 422);
+    }
+
+    $utilisateur->password = Hash::make($request->nouveau_mdp);
+    $utilisateur->save();
+
+    return response()->json(['message' => 'Mot de passe modifié avec succès.']);
+}
+}
+
+
