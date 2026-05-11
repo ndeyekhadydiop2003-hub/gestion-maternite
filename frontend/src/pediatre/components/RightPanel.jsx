@@ -36,13 +36,13 @@ const getNomPersonnel = (personnel) => {
 
 // ══════════════════════════════════════════════════════════
 export default function RightPanel({ babyId = null, onNavigate = () => {} }) {
-  const [activeTab, setActiveTab] = useState('Profil');
+  const [activeTab, setActiveTab] = useState('Consultations');
   const [bebe,      setBebe]      = useState(null);
   const [loading,   setLoading]   = useState(false);
-  const tabs = ['Profil', 'Consultations', 'Prescriptions'];
+  const tabs = ['Consultations', 'Prescriptions', 'Soins'];
 
   useEffect(() => {
-    if (!babyId) { setBebe(null); setActiveTab('Profil'); return; }
+    if (!babyId) { setBebe(null); setActiveTab('Consultations'); return; }
     setLoading(true);
     api.get(`/nouveau-nes/${babyId}`)
       .then(res => setBebe(res.data))
@@ -128,65 +128,6 @@ export default function RightPanel({ babyId = null, onNavigate = () => {} }) {
             ))}
           </div>
 
-          {/* ── Profil ── */}
-          {activeTab === 'Profil' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {[
-                ['Sexe',   getSexeLabel(bebe.sexe)],
-                ['Poids',  bebe.poids_naissance ? `${bebe.poids_naissance} kg` : '—'],
-                ['Taille', bebe.taille          ? `${bebe.taille} cm`          : '—'],
-                ['Mère',   patiente ? `${patiente.prenom} ${patiente.nom}` : '—'],
-              ].map(([l, v]) => (
-                <div key={l} className="info-row">
-                  <span className="lbl">{l}</span>
-                  <span className="val">{v}</span>
-                </div>
-              ))}
-              <div className="info-row">
-                <span className="lbl">Apgar 1min</span>
-                <span className="val">
-                  <span className={`badge ${apgar1.cls}`}>{apgar1.label}</span>
-                </span>
-              </div>
-              <div className="info-row">
-                <span className="lbl">Apgar 5min</span>
-                <span className="val">
-                  <span className={`badge ${apgar5.cls}`}>{apgar5.label}</span>
-                </span>
-              </div>
-
-              {bebe.accouchement && (
-                <div style={{
-                  marginTop: 10, padding: '10px 12px',
-                  background: '#f9f9fc', borderRadius: 8,
-                  border: '1px solid var(--sand)', fontSize: 12,
-                }}>
-                  <div style={{ fontWeight: 700, marginBottom: 6, color: 'var(--rose-2)' }}>
-                    🏥 Accouchement
-                  </div>
-                  {[
-                    ['Type', bebe.accouchement?.type_accouchement?.replace('_', ' ') ?? '—'],
-                    ['Date', formatDate(bebe.accouchement?.date_accouchement)],
-                    ['Complications', bebe.accouchement?.complication ?? 'Aucune'],
-                  ].map(([l, v]) => (
-                    <div key={l} className="info-row">
-                      <span className="lbl">{l}</span>
-                      <span className="val">{v}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <button
-                className="btn-primary btn-sm"
-                style={{ width: '100%', marginTop: 10 }}
-                onClick={() => onNavigate('dossier-detail', babyId)}
-              >
-                Voir dossier complet →
-              </button>
-            </div>
-          )}
-
           {/* ── Consultations ── */}
           {activeTab === 'Consultations' && (
             <ConsultationsBebe
@@ -201,6 +142,14 @@ export default function RightPanel({ babyId = null, onNavigate = () => {} }) {
               patienteId={patienteId}
               onNavigate={onNavigate}
               babyId={babyId}
+            />
+          )}
+
+          {/* ── Soins ── */}
+          {activeTab === 'Soins' && (
+            <SoinsBebe
+              babyId={babyId}
+              onNavigate={onNavigate}
             />
           )}
         </>
@@ -484,15 +433,11 @@ ConsultationsBebe.propTypes = {
   onNavigate: PropTypes.func,
 };
 
-ConsultationsBebe.propTypes = {
-  babyId:     PropTypes.number,
-  onNavigate: PropTypes.func,
-};
-
 // ══════════════════════════════════════════════════════════
 function PrescriptionsBebe({ patienteId = null, onNavigate = () => {}, babyId = null }) {
   const [prescriptions, setPrescriptions] = useState([]);
   const [loading,       setLoading]       = useState(true);
+  const [selectedPrescription, setSelectedPrescription] = useState(null);
 
   useEffect(() => {
     if (!patienteId) { setLoading(false); return; }
@@ -509,6 +454,53 @@ function PrescriptionsBebe({ patienteId = null, onNavigate = () => {}, babyId = 
     <div style={{ padding: 16, color: 'var(--gray)', fontSize: 12, textAlign: 'center' }}>⏳ Chargement...</div>
   );
 
+  // ── Vue Détail ──
+  if (selectedPrescription) {
+    const p = selectedPrescription;
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>
+            💊 Détail prescription
+          </div>
+          <button onClick={() => setSelectedPrescription(null)} style={{
+            width: 26, height: 26, borderRadius: '50%',
+            border: '1px solid var(--sand)', background: '#f9f9fc',
+            cursor: 'pointer', fontSize: 14, display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+          }}>×</button>
+        </div>
+
+        {[
+          ['📅 Date prescription', formatDate(p.date_prescription)],
+          ['💊 Médicaments', p.medicaments || '—'],
+          ['📋 Posologie', p.posologie || '—'],
+          ['🏁 Date fin', formatDate(p.date_fin)],
+        ].map(([label, value]) => (
+          <div key={label} style={{
+            display: 'flex', justifyContent: 'space-between',
+            fontSize: 12, padding: '5px 0',
+            borderBottom: '1px solid var(--sand)',
+          }}>
+            <span style={{ color: 'var(--gray)', fontWeight: 600 }}>{label}</span>
+            <span style={{ color: 'var(--dark)', fontWeight: 500, textAlign: 'right', maxWidth: '55%' }}>{value}</span>
+          </div>
+        ))}
+
+        <button
+          onClick={() => setSelectedPrescription(null)}
+          style={{
+            marginTop: 12, width: '100%', padding: '7px', borderRadius: 8,
+            border: '1px solid var(--sand)', background: '#fff',
+            fontSize: 12, fontWeight: 600, cursor: 'pointer',
+          }}
+        >
+          ← Retour à la liste
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {prescriptions.length === 0 ? (
@@ -516,7 +508,7 @@ function PrescriptionsBebe({ patienteId = null, onNavigate = () => {}, babyId = 
           Aucune prescription enregistrée.
         </div>
       ) : (
-        <div style={{ maxHeight: 400, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ maxHeight: 420, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
           {prescriptions.map((p, i) => (
             <div key={p.id_prescription ?? i} style={{
               background: '#f9f9fc', borderRadius: 8,
@@ -536,6 +528,18 @@ function PrescriptionsBebe({ patienteId = null, onNavigate = () => {}, babyId = 
               {p.posologie && (
                 <div style={{ fontSize: 11, color: 'var(--rose-2)', marginTop: 2 }}>{p.posologie}</div>
               )}
+              <button
+                onClick={() => setSelectedPrescription(p)}
+                style={{
+                  marginTop: 6, padding: '4px 10px', borderRadius: 6,
+                  border: '1px solid var(--rose-border)',
+                  background: 'var(--rose-light)',
+                  color: 'var(--rose-2)', fontSize: 11,
+                  fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                👁️ Voir
+              </button>
             </div>
           ))}
         </div>
@@ -553,6 +557,147 @@ PrescriptionsBebe.propTypes = {
   patienteId: PropTypes.number,
   onNavigate: PropTypes.func,
   babyId:     PropTypes.number,
+};
+
+// ══════════════════════════════════════════════════════════
+function SoinsBebe({ babyId = null, onNavigate = () => {} }) {
+  const [soins,       setSoins]       = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [selectedSoin, setSelectedSoin] = useState(null);
+
+  useEffect(() => {
+    if (!babyId) { 
+      setLoading(false); 
+      return; 
+    }
+
+    setLoading(true);
+    api.get(`/nouveau-nes/${babyId}/soins`)
+      .then(res => {
+        const all = Array.isArray(res.data) ? res.data : [];
+        const soinsData = all.map(s => ({
+          id_soin:     s.id_soin,
+          date_soin:   s.date_soin,
+          type_soin:   s.type_soin,
+          description: s.description,
+          statut:      s.statut,
+        })).sort((a, b) => new Date(b.date_soin) - new Date(a.date_soin));
+        
+        setSoins(soinsData);
+      })
+      .catch(() => setSoins([]))
+      .finally(() => setLoading(false));
+  }, [babyId]);
+
+  if (loading) return (
+    <div style={{ padding: 16, color: 'var(--gray)', fontSize: 12, textAlign: 'center' }}>⏳ Chargement...</div>
+  );
+
+  // ── Vue Détail ──
+  if (selectedSoin) {
+    const s = selectedSoin;
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>
+            🩺 Détail soin
+          </div>
+          <button onClick={() => setSelectedSoin(null)} style={{
+            width: 26, height: 26, borderRadius: '50%',
+            border: '1px solid var(--sand)', background: '#f9f9fc',
+            cursor: 'pointer', fontSize: 14, display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+          }}>×</button>
+        </div>
+
+        {[
+          ['📅 Date du soin', formatDate(s.date_soin)],
+          ['🏥 Type de soin', s.type_soin || '—'],
+          ['📋 Description', s.description || '—'],
+          ['📊 Statut', s.statut === 'effectue' ? '✓ Effectué' : s.statut === 'prevu' ? '📅 Prévu' : '—'],
+        ].map(([label, value]) => (
+          <div key={label} style={{
+            display: 'flex', justifyContent: 'space-between',
+            fontSize: 12, padding: '5px 0',
+            borderBottom: '1px solid var(--sand)',
+          }}>
+            <span style={{ color: 'var(--gray)', fontWeight: 600 }}>{label}</span>
+            <span style={{ color: 'var(--dark)', fontWeight: 500, textAlign: 'right', maxWidth: '55%' }}>{value}</span>
+          </div>
+        ))}
+
+        <button
+          onClick={() => setSelectedSoin(null)}
+          style={{
+            marginTop: 12, width: '100%', padding: '7px', borderRadius: 8,
+            border: '1px solid var(--sand)', background: '#fff',
+            fontSize: 12, fontWeight: 600, cursor: 'pointer',
+          }}
+        >
+          ← Retour à la liste
+        </button>
+      </div>
+    );
+  }
+
+  // ── Liste des soins ──
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <button className="btn-primary btn-sm"
+        style={{ width: '100%', marginBottom: 8, background: 'var(--purple)' }}
+        onClick={() => onNavigate('planifier-soin', babyId)}>
+        + Planifier soin
+      </button>
+
+      {soins.length === 0 ? (
+        <div style={{ padding: 16, color: 'var(--gray)', fontSize: 12, textAlign: 'center' }}>
+          Aucun soin planifié.
+        </div>
+      ) : (
+        <div style={{ maxHeight: 420, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {soins.map(s => (
+            <div key={s.id_soin} style={{
+              background: '#f9f9fc', borderRadius: 8,
+              border: '1px solid var(--sand)', padding: '10px 12px',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--dark)' }}>
+                  🩺 {new Date(s.date_soin).toLocaleDateString('fr-FR')}
+                </div>
+                <span className={`badge ${
+                  s.statut === 'effectue' ? 'b-normal' :
+                  s.statut === 'prevu'    ? 'b-amber'  : 'b-gray'
+                }`} style={{ fontSize: 10 }}>
+                  {s.statut === 'effectue' ? '✓ Effectué' :
+                   s.statut === 'prevu'    ? '📅 Prévu'  : '—'}
+                </span>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--gray)', marginTop: 4 }}>
+                {s.type_soin || s.description || '—'}
+              </div>
+              <button
+                onClick={() => setSelectedSoin(s)}
+                style={{
+                  marginTop: 6, padding: '4px 10px', borderRadius: 6,
+                  border: '1px solid var(--rose-border)',
+                  background: 'var(--rose-light)',
+                  color: 'var(--rose-2)', fontSize: 11,
+                  fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                👁️ Voir
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+SoinsBebe.propTypes = {
+  babyId:     PropTypes.number,
+  onNavigate: PropTypes.func,
 };
 
 // ══════════════════════════════════════════════════════════
